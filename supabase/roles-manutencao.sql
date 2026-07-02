@@ -1,0 +1,9 @@
+-- Migração de papéis: tecnico_adm → manutencao_adm + manutencao_externa
+--
+-- O PostgreSQL NÃO permite usar valores novos de enum na mesma transação
+-- em que eles foram criados. Por isso são DOIS arquivos separados:
+--
+--   1) roles-manutencao-1-enum.sql   ← execute primeiro, aguarde Success
+--   2) roles-manutencao-2-migrate.sql ← execute depois
+--
+-- Não execute este arquivo; use os dois passos acima.
