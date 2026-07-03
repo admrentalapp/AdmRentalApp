@@ -40,7 +40,7 @@ export function SitesPage({
       <button
         type="button"
         onClick={onBack}
-        className="flex items-center gap-2 text-sm font-medium text-zinc-400 hover:text-white"
+        className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground"
       >
         <ArrowLeft size={16} />
         Voltar para clientes
@@ -48,9 +48,9 @@ export function SitesPage({
 
       <section className="mt-5 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-sm text-zinc-500">Obras / unidades</p>
+          <p className="text-sm text-muted-foreground">Obras / unidades</p>
           <h3 className="mt-1 text-2xl font-bold">{client.name}</h3>
-          <p className="mt-2 text-sm text-zinc-400">
+          <p className="mt-2 text-sm text-muted-foreground">
             Locais onde os equipamentos deste cliente estão instalados.
           </p>
         </div>
@@ -65,32 +65,32 @@ export function SitesPage({
         </button>
       </section>
 
-      <section className="mt-8 overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900">
-        <div className="border-b border-zinc-800 px-6 py-5">
+      <section className="mt-8 overflow-hidden rounded-2xl border border-border bg-card">
+        <div className="border-b border-border px-6 py-5">
           <h4 className="font-bold">Obras cadastradas</h4>
-          <p className="mt-1 text-sm text-zinc-500">
+          <p className="mt-1 text-sm text-muted-foreground">
             Total de registros: {sites.length}
           </p>
         </div>
 
         {loading && (
-          <div className="p-8 text-center text-sm text-zinc-400">
+          <div className="p-8 text-center text-sm text-muted-foreground">
             Carregando obras...
           </div>
         )}
 
         {!loading && error && (
-          <div className="p-8 text-center text-sm text-red-300">{error}</div>
+          <div className="p-8 text-center text-sm text-red-600 dark:text-red-300">{error}</div>
         )}
 
         {!loading && !error && sites.length === 0 && (
           <div className="flex min-h-64 flex-col items-center justify-center gap-4 p-8 text-center">
-            <MapPin className="text-zinc-600" size={34} />
+            <MapPin className="text-muted-foreground" size={34} />
             <div>
-              <p className="font-medium text-zinc-300">
+              <p className="font-medium text-foreground">
                 Nenhuma obra cadastrada.
               </p>
-              <p className="mt-2 text-sm text-zinc-500">
+              <p className="mt-2 text-sm text-muted-foreground">
                 Clique em &quot;Nova obra&quot; para cadastrar a primeira
                 unidade deste cliente.
               </p>
@@ -106,20 +106,20 @@ export function SitesPage({
         )}
 
         {!loading && !error && sites.length > 0 && (
-          <div className="divide-y divide-zinc-800">
+          <div className="divide-y divide-border">
             {sites.map((site) => (
               <div
                 key={site.id}
                 className="flex flex-col gap-3 px-6 py-5 sm:flex-row sm:items-center sm:justify-between"
               >
                 <div className="flex items-center gap-4">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-zinc-950 text-red-400">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-background text-red-600 dark:text-red-400">
                     <MapPin size={20} />
                   </div>
 
                   <div>
                     <p className="font-semibold">{site.name}</p>
-                    <p className="mt-1 text-xs text-zinc-500">
+                    <p className="mt-1 text-xs text-muted-foreground">
                       {site.address && site.address.trim().length > 0
                         ? site.address
                         : 'Sem endereço cadastrado'}
@@ -130,8 +130,8 @@ export function SitesPage({
                 <span
                   className={`w-fit rounded-full px-3 py-1 text-xs font-semibold ${
                     site.active
-                      ? 'bg-emerald-950 text-emerald-400'
-                      : 'bg-zinc-800 text-zinc-400'
+                      ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400'
+                      : 'bg-muted text-muted-foreground'
                   }`}
                 >
                   {site.active ? 'Ativa' : 'Inativa'}
@@ -144,12 +144,12 @@ export function SitesPage({
 
       {modalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-5">
-          <section className="w-full max-w-md rounded-2xl border border-zinc-800 bg-zinc-900 p-6 shadow-2xl">
+          <section className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-2xl">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-sm text-zinc-500">Novo cadastro</p>
+                <p className="text-sm text-muted-foreground">Novo cadastro</p>
                 <h3 className="mt-1 text-xl font-bold">Cadastrar obra</h3>
-                <p className="mt-1 text-xs text-zinc-500">
+                <p className="mt-1 text-xs text-muted-foreground">
                   Vinculada a {client.name}
                 </p>
               </div>
@@ -157,7 +157,7 @@ export function SitesPage({
               <button
                 type="button"
                 onClick={onCloseModal}
-                className="rounded-lg p-2 text-zinc-400 hover:bg-zinc-800 hover:text-white"
+                className="rounded-lg p-2 text-muted-foreground hover:bg-accent hover:text-foreground"
               >
                 <X size={20} />
               </button>
@@ -167,7 +167,7 @@ export function SitesPage({
               <div>
                 <label
                   htmlFor="siteName"
-                  className="mb-2 block text-sm font-medium text-zinc-200"
+                  className="mb-2 block text-sm font-medium text-foreground"
                 >
                   Nome da obra
                 </label>
@@ -180,17 +180,17 @@ export function SitesPage({
                   value={newSiteName}
                   onChange={(event) => onNewSiteNameChange(event.target.value)}
                   placeholder="Ex.: Obra Centro / Unidade Matriz"
-                  className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-3 text-white outline-none placeholder:text-zinc-600 focus:border-red-500"
+                  className="w-full rounded-lg border border-border bg-background px-4 py-3 text-foreground outline-none placeholder:text-muted-foreground focus:border-red-500"
                 />
               </div>
 
               <div>
                 <label
                   htmlFor="siteAddress"
-                  className="mb-2 block text-sm font-medium text-zinc-200"
+                  className="mb-2 block text-sm font-medium text-foreground"
                 >
                   Endereço{' '}
-                  <span className="font-normal text-zinc-500">(opcional)</span>
+                  <span className="font-normal text-muted-foreground">(opcional)</span>
                 </label>
 
                 <input
@@ -201,12 +201,12 @@ export function SitesPage({
                     onNewSiteAddressChange(event.target.value)
                   }
                   placeholder="Ex.: Rua Exemplo, 123 - Bairro"
-                  className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-3 text-white outline-none placeholder:text-zinc-600 focus:border-red-500"
+                  className="w-full rounded-lg border border-border bg-background px-4 py-3 text-foreground outline-none placeholder:text-muted-foreground focus:border-red-500"
                 />
               </div>
 
               {newSiteMessage && (
-                <p className="rounded-lg border border-red-900 bg-red-950/40 p-3 text-sm text-red-200">
+                <p className="rounded-lg border border-red-300 bg-red-100 dark:border-red-900 dark:bg-red-950/40 p-3 text-sm text-red-700 dark:text-red-200">
                   {newSiteMessage}
                 </p>
               )}
@@ -215,7 +215,7 @@ export function SitesPage({
                 <button
                   type="button"
                   onClick={onCloseModal}
-                  className="rounded-lg border border-zinc-700 px-4 py-3 text-sm font-medium text-zinc-200 hover:bg-zinc-800"
+                  className="rounded-lg border border-border px-4 py-3 text-sm font-medium text-foreground hover:bg-accent"
                 >
                   Cancelar
                 </button>

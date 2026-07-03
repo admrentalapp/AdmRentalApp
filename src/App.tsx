@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { Bell, ClipboardList, LogOut, Menu, Plus, X } from 'lucide-react'
 import { AppLogo } from '@/components/shared/app-logo'
 import { LoginBackground } from '@/components/auth/login-background'
+import { ThemeToggle } from '@/components/theme/theme-toggle'
 import { ClientNewTicketModal } from '@/components/tickets/client-new-ticket-modal'
 import type { InspectionFormValues } from '@/components/tickets/inspection-section'
 import { PriorityBadge, StatusBadge } from '@/components/tickets/badges'
@@ -1667,7 +1668,7 @@ export default function App() {
   function renderTechnicianArea() {
     if (viewingTicket) {
       return (
-        <main className="min-h-svh bg-zinc-950 p-5 text-white sm:p-8">
+        <main className="min-h-svh bg-background p-5 text-foreground sm:p-8">
           <div className="mx-auto max-w-3xl">
             <TechnicianTicketDetailPage
               ticket={viewingTicket}
@@ -1700,62 +1701,65 @@ export default function App() {
     }
 
     return (
-      <main className="min-h-svh bg-zinc-950 text-white">
-        <header className="border-b border-zinc-800 px-5 py-6 sm:px-8">
+      <main className="min-h-svh bg-background text-foreground">
+        <header className="border-b border-border px-5 py-6 sm:px-8">
           <div className="mx-auto flex max-w-3xl items-center justify-between gap-4">
             <div>
-              <p className="text-sm text-zinc-500">Área de manutenção</p>
+              <p className="text-sm text-muted-foreground">Área de manutenção</p>
               <h1 className="text-xl font-bold">
                 Olá, {profile?.full_name || roleLabel(profile?.role ?? 'manutencao_adm')}
               </h1>
             </div>
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="rounded-lg border border-zinc-700 px-4 py-2 text-sm font-medium text-zinc-200 hover:bg-zinc-800"
-            >
-              Sair
-            </button>
+            <div className="flex items-center gap-2">
+              <ThemeToggle />
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-accent"
+              >
+                Sair
+              </button>
+            </div>
           </div>
         </header>
 
         <div className="mx-auto max-w-3xl p-5 sm:p-8">
           <section>
             <h2 className="text-2xl font-bold">Meus chamados</h2>
-            <p className="mt-2 text-sm text-zinc-400">
+            <p className="mt-2 text-sm text-muted-foreground">
               Chamados atribuídos a você. Registre inspeções e anotações no
               histórico de cada OS.
             </p>
           </section>
 
-          <section className="mt-8 overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900">
-            <div className="border-b border-zinc-800 px-6 py-5">
+          <section className="mt-8 overflow-hidden rounded-2xl border border-border bg-card">
+            <div className="border-b border-border px-6 py-5">
               <h3 className="font-bold">Chamados atribuídos</h3>
-              <p className="mt-1 text-sm text-zinc-500">
+              <p className="mt-1 text-sm text-muted-foreground">
                 Total: {tickets.length}
               </p>
             </div>
 
             {ticketsLoading && (
-              <div className="p-8 text-center text-sm text-zinc-400">
+              <div className="p-8 text-center text-sm text-muted-foreground">
                 Carregando chamados...
               </div>
             )}
 
             {!ticketsLoading && ticketsError && (
-              <div className="p-8 text-center text-sm text-red-300">
+              <div className="p-8 text-center text-sm text-red-600 dark:text-red-300">
                 {ticketsError}
               </div>
             )}
 
             {!ticketsLoading && !ticketsError && tickets.length === 0 && (
               <div className="flex min-h-64 flex-col items-center justify-center gap-4 p-8 text-center">
-                <ClipboardList className="text-zinc-600" size={34} />
+                <ClipboardList className="text-muted-foreground" size={34} />
                 <div>
-                  <p className="font-medium text-zinc-300">
+                  <p className="font-medium text-foreground">
                     Nenhum chamado atribuído.
                   </p>
-                  <p className="mt-2 text-sm text-zinc-500">
+                  <p className="mt-2 text-sm text-muted-foreground">
                     O gestor ADM atribuirá chamados a você após a triagem.
                   </p>
                 </div>
@@ -1763,19 +1767,19 @@ export default function App() {
             )}
 
             {!ticketsLoading && !ticketsError && tickets.length > 0 && (
-              <div className="divide-y divide-zinc-800">
+              <div className="divide-y divide-border">
                 {tickets.map((ticket) => (
                   <button
                     key={ticket.id}
                     type="button"
                     onClick={() => void openTicketDetail(ticket)}
-                    className="flex w-full flex-col gap-3 px-6 py-5 text-left transition hover:bg-zinc-950/60 sm:flex-row sm:items-center sm:justify-between"
+                    className="flex w-full flex-col gap-3 px-6 py-5 text-left transition hover:bg-accent sm:flex-row sm:items-center sm:justify-between"
                   >
                     <div>
                       <p className="font-semibold">
                         #{ticket.ticket_number} · {ticket.title}
                       </p>
-                      <p className="mt-1 text-xs text-zinc-500">
+                      <p className="mt-1 text-xs text-muted-foreground">
                         {formatDateTime(ticket.created_at)}
                       </p>
                     </div>
@@ -1796,19 +1800,19 @@ export default function App() {
   function renderClientArea() {
     if (!profile?.client_id) {
       return (
-        <main className="flex min-h-svh items-center justify-center bg-zinc-950 p-5 text-white">
-          <section className="w-full max-w-lg rounded-2xl border border-zinc-800 bg-zinc-900 p-7">
+        <main className="flex min-h-svh items-center justify-center bg-background p-5 text-foreground">
+          <section className="w-full max-w-lg rounded-2xl border border-border bg-card p-7">
             <h1 className="text-2xl font-bold">
               Bem-vindo, {profile?.full_name || 'Cliente'}
             </h1>
-            <p className="mt-4 rounded-xl border border-amber-900 bg-amber-950/30 p-4 text-sm text-amber-200">
+            <p className="mt-4 rounded-xl border border-amber-300 bg-amber-100 p-4 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
               Seu perfil ainda não está vinculado a uma empresa. Peça ao gestor
               ADM para associar sua conta a um cliente.
             </p>
             <button
               type="button"
               onClick={handleLogout}
-              className="mt-6 w-full rounded-lg border border-zinc-700 px-4 py-3 font-medium hover:bg-zinc-800"
+              className="mt-6 w-full rounded-lg border border-border px-4 py-3 font-medium hover:bg-accent"
             >
               Sair
             </button>
@@ -1819,7 +1823,7 @@ export default function App() {
 
     if (viewingTicket) {
       return (
-        <main className="min-h-svh bg-zinc-950 p-5 text-white sm:p-8">
+        <main className="min-h-svh bg-background p-5 text-foreground sm:p-8">
           <div className="mx-auto max-w-3xl">
             <ClientTicketDetailPage
               ticket={viewingTicket}
@@ -1849,25 +1853,28 @@ export default function App() {
     }
 
     return (
-      <main className="min-h-svh bg-zinc-950 text-white">
-        <header className="border-b border-zinc-800 px-5 py-6 sm:px-8">
+      <main className="min-h-svh bg-background text-foreground">
+        <header className="border-b border-border px-5 py-6 sm:px-8">
           <div className="mx-auto flex max-w-3xl items-center justify-between gap-4">
             <div>
-              <p className="text-sm text-zinc-500">Área do cliente</p>
+              <p className="text-sm text-muted-foreground">Área do cliente</p>
               <h1 className="text-xl font-bold">
                 {clientCompanyName || 'Minha empresa'}
               </h1>
-              <p className="mt-1 text-sm text-zinc-400">
+              <p className="mt-1 text-sm text-muted-foreground">
                 {profile.full_name || 'Usuário cliente'}
               </p>
             </div>
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="rounded-lg border border-zinc-700 px-4 py-2 text-sm font-medium text-zinc-200 hover:bg-zinc-800"
-            >
-              Sair
-            </button>
+            <div className="flex items-center gap-2">
+              <ThemeToggle />
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-accent"
+              >
+                Sair
+              </button>
+            </div>
           </div>
         </header>
 
@@ -1875,7 +1882,7 @@ export default function App() {
           <section className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <h2 className="text-2xl font-bold">Meus chamados</h2>
-              <p className="mt-2 text-sm text-zinc-400">
+              <p className="mt-2 text-sm text-muted-foreground">
                 Abra chamados de manutenção e acompanhe o andamento.
               </p>
             </div>
@@ -1896,42 +1903,42 @@ export default function App() {
             <p
               className={`mt-6 rounded-lg border p-3 text-sm ${
                 clientNewMessage.includes('falharam')
-                  ? 'border-amber-900 bg-amber-950/40 text-amber-100'
-                  : 'border-green-900 bg-green-950/40 text-green-200'
+                  ? 'border-amber-300 bg-amber-100 text-amber-800 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-100'
+                  : 'border-green-300 bg-green-100 text-green-800 dark:border-green-900 dark:bg-green-950/40 dark:text-green-200'
               }`}
             >
               {clientNewMessage}
             </p>
           )}
 
-          <section className="mt-8 overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900">
-            <div className="border-b border-zinc-800 px-6 py-5">
+          <section className="mt-8 overflow-hidden rounded-2xl border border-border bg-card">
+            <div className="border-b border-border px-6 py-5">
               <h3 className="font-bold">Chamados da empresa</h3>
-              <p className="mt-1 text-sm text-zinc-500">
+              <p className="mt-1 text-sm text-muted-foreground">
                 Total: {tickets.length}
               </p>
             </div>
 
             {ticketsLoading && (
-              <div className="p-8 text-center text-sm text-zinc-400">
+              <div className="p-8 text-center text-sm text-muted-foreground">
                 Carregando chamados...
               </div>
             )}
 
             {!ticketsLoading && ticketsError && (
-              <div className="p-8 text-center text-sm text-red-300">
+              <div className="p-8 text-center text-sm text-red-600 dark:text-red-300">
                 {ticketsError}
               </div>
             )}
 
             {!ticketsLoading && !ticketsError && tickets.length === 0 && (
               <div className="flex min-h-64 flex-col items-center justify-center gap-4 p-8 text-center">
-                <ClipboardList className="text-zinc-600" size={34} />
+                <ClipboardList className="text-muted-foreground" size={34} />
                 <div>
-                  <p className="font-medium text-zinc-300">
+                  <p className="font-medium text-foreground">
                     Nenhum chamado aberto ainda.
                   </p>
-                  <p className="mt-2 text-sm text-zinc-500">
+                  <p className="mt-2 text-sm text-muted-foreground">
                     Clique em &quot;Abrir chamado&quot; para solicitar
                     manutenção.
                   </p>
@@ -1940,19 +1947,19 @@ export default function App() {
             )}
 
             {!ticketsLoading && !ticketsError && tickets.length > 0 && (
-              <div className="divide-y divide-zinc-800">
+              <div className="divide-y divide-border">
                 {tickets.map((ticket) => (
                   <button
                     key={ticket.id}
                     type="button"
                     onClick={() => void openTicketDetail(ticket)}
-                    className="flex w-full flex-col gap-3 px-6 py-5 text-left transition hover:bg-zinc-950/60 sm:flex-row sm:items-center sm:justify-between"
+                    className="flex w-full flex-col gap-3 px-6 py-5 text-left transition hover:bg-accent sm:flex-row sm:items-center sm:justify-between"
                   >
                     <div>
                       <p className="font-semibold">
                         #{ticket.ticket_number} · {ticket.title}
                       </p>
-                      <p className="mt-1 text-xs text-zinc-500">
+                      <p className="mt-1 text-xs text-muted-foreground">
                         {formatDateTime(ticket.created_at)}
                       </p>
                     </div>
@@ -1997,7 +2004,7 @@ export default function App() {
 
   if (loading) {
     return (
-      <main className="flex min-h-svh items-center justify-center bg-zinc-950 text-zinc-400">
+      <main className="flex min-h-svh items-center justify-center bg-background text-muted-foreground">
         Carregando acesso...
       </main>
     )
@@ -2015,7 +2022,7 @@ export default function App() {
           <div className="flex flex-col items-center text-center">
             <div className="relative">
               <div className="pointer-events-none absolute -inset-6 rounded-full bg-red-600/20 blur-2xl" />
-              <AppLogo className="relative h-20 w-auto max-w-[220px] object-contain" />
+              <AppLogo className="relative h-24 w-auto max-w-[250px] object-contain" />
             </div>
 
             <h1 className="mt-6 text-2xl font-bold tracking-tight">
@@ -2101,7 +2108,7 @@ export default function App() {
   const activeMenuItem = managerMenuItems.find((item) => item.page === activePage)
 
   return (
-    <main className="min-h-svh bg-zinc-950 text-white">
+    <main className="min-h-svh bg-background text-foreground">
       {menuOpen && (
         <button
           type="button"
@@ -2112,7 +2119,7 @@ export default function App() {
       )}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-40 flex w-72 flex-col border-r border-zinc-800 bg-zinc-950 p-5 transition-transform lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-40 flex w-72 flex-col border-r border-border bg-card p-5 transition-transform lg:translate-x-0 ${
           menuOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
@@ -2122,14 +2129,14 @@ export default function App() {
 
             <div>
               <h1 className="font-bold">ADM Manutenção</h1>
-              <p className="text-xs text-zinc-500">Gestão operacional</p>
+              <p className="text-xs text-muted-foreground">Gestão operacional</p>
             </div>
           </div>
 
           <button
             type="button"
             onClick={() => setMenuOpen(false)}
-            className="rounded-lg p-2 text-zinc-400 hover:bg-zinc-800 lg:hidden"
+            className="rounded-lg p-2 text-muted-foreground hover:bg-accent lg:hidden"
           >
             <X size={20} />
           </button>
@@ -2148,7 +2155,7 @@ export default function App() {
                 className={`flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-sm font-medium transition ${
                   isActive
                     ? 'bg-red-600 text-white'
-                    : 'text-zinc-400 hover:bg-zinc-900 hover:text-white'
+                    : 'text-muted-foreground hover:bg-accent hover:text-foreground'
                 }`}
               >
                 <Icon size={19} />
@@ -2158,17 +2165,17 @@ export default function App() {
           })}
         </nav>
 
-        <div className="mt-auto border-t border-zinc-800 pt-5">
-          <p className="truncate text-sm font-medium text-zinc-200">
+        <div className="mt-auto border-t border-border pt-5">
+          <p className="truncate text-sm font-medium text-foreground">
             {profile.full_name || 'Gestor ADM'}
           </p>
 
-          <p className="mt-1 text-xs text-zinc-500">Gestor ADM</p>
+          <p className="mt-1 text-xs text-muted-foreground">Gestor ADM</p>
 
           <button
             type="button"
             onClick={handleLogout}
-            className="mt-5 flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-zinc-400 hover:bg-zinc-900 hover:text-white"
+            className="mt-5 flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground"
           >
             <LogOut size={18} />
             Sair
@@ -2177,12 +2184,12 @@ export default function App() {
       </aside>
 
       <section className="lg:pl-72">
-        <header className="flex h-20 items-center justify-between border-b border-zinc-800 bg-zinc-950 px-5 sm:px-8">
+        <header className="flex h-20 items-center justify-between border-b border-border bg-card px-5 sm:px-8">
           <div className="flex items-center gap-4">
             <button
               type="button"
               onClick={() => setMenuOpen(true)}
-              className="rounded-lg p-2 text-zinc-300 hover:bg-zinc-900 lg:hidden"
+              className="rounded-lg p-2 text-muted-foreground hover:bg-accent lg:hidden"
             >
               <Menu size={22} />
             </button>
@@ -2192,19 +2199,22 @@ export default function App() {
                 {activeMenuItem?.label || 'Visão geral'}
               </h2>
 
-              <p className="text-xs text-zinc-500">
+              <p className="text-xs text-muted-foreground">
                 Gestão de manutenção e chamados
               </p>
             </div>
           </div>
 
-          <button
-            type="button"
-            className="relative rounded-lg p-2 text-zinc-400 hover:bg-zinc-900 hover:text-white"
-          >
-            <Bell size={21} />
-            <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-red-500" />
-          </button>
+          <div className="flex items-center gap-1">
+            <ThemeToggle />
+            <button
+              type="button"
+              className="relative rounded-lg p-2 text-muted-foreground hover:bg-accent hover:text-foreground"
+            >
+              <Bell size={21} />
+              <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-red-500" />
+            </button>
+          </div>
         </header>
 
         <div className="p-5 sm:p-8">

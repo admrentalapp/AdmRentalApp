@@ -98,9 +98,9 @@ export function EquipmentPage({
     <>
       <section className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-sm text-zinc-500">Frota ADM</p>
+          <p className="text-sm text-muted-foreground">Frota ADM</p>
           <h3 className="mt-1 text-2xl font-bold">Equipamentos</h3>
-          <p className="mt-2 text-sm text-zinc-400">
+          <p className="mt-2 text-sm text-muted-foreground">
             Patrimônio da ADM em locação nos clientes. Cadastre na frota e aloque
             a uma empresa e obra.
           </p>
@@ -117,16 +117,16 @@ export function EquipmentPage({
       </section>
 
       <section className="mt-6 grid gap-4 sm:grid-cols-3">
-        <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-4">
-          <p className="text-sm text-zinc-500">Total na frota</p>
+        <div className="rounded-2xl border border-border bg-card p-4">
+          <p className="text-sm text-muted-foreground">Total na frota</p>
           <p className="mt-2 text-2xl font-bold">{fleet.length}</p>
         </div>
-        <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-4">
-          <p className="text-sm text-zinc-500">Em locação</p>
+        <div className="rounded-2xl border border-border bg-card p-4">
+          <p className="text-sm text-muted-foreground">Em locação</p>
           <p className="mt-2 text-2xl font-bold">{allocatedCount}</p>
         </div>
-        <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-4">
-          <p className="text-sm text-zinc-500">Disponíveis</p>
+        <div className="rounded-2xl border border-border bg-card p-4">
+          <p className="text-sm text-muted-foreground">Disponíveis</p>
           <p className="mt-2 text-2xl font-bold">{availableCount}</p>
         </div>
       </section>
@@ -135,16 +135,16 @@ export function EquipmentPage({
         <div>
           <label
             htmlFor="equipmentFilterClient"
-            className="mb-2 block text-sm font-medium text-zinc-200"
+            className="mb-2 block text-sm font-medium text-foreground"
           >
             Filtrar por cliente{' '}
-            <span className="font-normal text-zinc-500">(opcional)</span>
+            <span className="font-normal text-muted-foreground">(opcional)</span>
           </label>
           <select
             id="equipmentFilterClient"
             value={filterClientId}
             onChange={(event) => onFilterClientChange(event.target.value)}
-            className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-3 text-white outline-none focus:border-red-500"
+            className="w-full rounded-lg border border-border bg-background px-4 py-3 text-foreground outline-none focus:border-red-500"
           >
             <option value="">Toda a frota</option>
             {clients.map((client) => (
@@ -158,17 +158,17 @@ export function EquipmentPage({
         <div>
           <label
             htmlFor="equipmentFilterSite"
-            className="mb-2 block text-sm font-medium text-zinc-200"
+            className="mb-2 block text-sm font-medium text-foreground"
           >
             Filtrar por obra{' '}
-            <span className="font-normal text-zinc-500">(opcional)</span>
+            <span className="font-normal text-muted-foreground">(opcional)</span>
           </label>
           <select
             id="equipmentFilterSite"
             value={filterSiteId}
             onChange={(event) => onFilterSiteChange(event.target.value)}
             disabled={!filterClientId}
-            className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-3 text-white outline-none focus:border-red-500 disabled:cursor-not-allowed disabled:opacity-50"
+            className="w-full rounded-lg border border-border bg-background px-4 py-3 text-foreground outline-none focus:border-red-500 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <option value="">Todas as obras</option>
             {sites.map((site) => (
@@ -180,38 +180,38 @@ export function EquipmentPage({
         </div>
       </section>
 
-      <section className="mt-8 overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900">
-        <div className="border-b border-zinc-800 px-6 py-5">
+      <section className="mt-8 overflow-hidden rounded-2xl border border-border bg-card">
+        <div className="border-b border-border px-6 py-5">
           <h4 className="font-bold">
             {filterClient
               ? `Equipamentos alocados a ${filterClient.name}`
               : 'Frota completa ADM'}
           </h4>
-          <p className="mt-1 text-sm text-zinc-500">
+          <p className="mt-1 text-sm text-muted-foreground">
             Total de registros: {fleet.length}
           </p>
         </div>
 
         {loading && (
-          <div className="p-8 text-center text-sm text-zinc-400">
+          <div className="p-8 text-center text-sm text-muted-foreground">
             Carregando equipamentos...
           </div>
         )}
 
         {!loading && error && (
-          <div className="p-8 text-center text-sm text-red-300">{error}</div>
+          <div className="p-8 text-center text-sm text-red-600 dark:text-red-300">{error}</div>
         )}
 
         {!loading && !error && fleet.length === 0 && (
           <div className="flex min-h-64 flex-col items-center justify-center gap-4 p-8 text-center">
-            <Wrench className="text-zinc-600" size={34} />
+            <Wrench className="text-muted-foreground" size={34} />
             <div>
-              <p className="font-medium text-zinc-300">
+              <p className="font-medium text-foreground">
                 {filterClientId
                   ? 'Nenhum equipamento alocado a este cliente.'
                   : 'Nenhum equipamento cadastrado na frota.'}
               </p>
-              <p className="mt-2 text-sm text-zinc-500">
+              <p className="mt-2 text-sm text-muted-foreground">
                 Cadastre equipamentos da ADM e aloque aos clientes em locação.
               </p>
             </div>
@@ -228,29 +228,29 @@ export function EquipmentPage({
         )}
 
         {!loading && !error && fleet.length > 0 && (
-          <div className="divide-y divide-zinc-800">
+          <div className="divide-y divide-border">
             {fleet.map((item) => (
               <div
                 key={item.id}
                 className="flex flex-col gap-3 px-6 py-5 lg:flex-row lg:items-center lg:justify-between"
               >
                 <div className="flex items-center gap-4">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-zinc-950 text-red-400">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-background text-red-600 dark:text-red-400">
                     <Wrench size={20} />
                   </div>
 
                   <div>
                     <p className="font-semibold">{item.asset_tag}</p>
-                    <p className="mt-1 text-sm text-zinc-300">
+                    <p className="mt-1 text-sm text-foreground">
                       {item.description}
                     </p>
-                    <p className="mt-1 text-xs text-zinc-500">
+                    <p className="mt-1 text-xs text-muted-foreground">
                       {item.serial_number
                         ? `Série: ${item.serial_number}`
                         : 'Sem número de série'}
                     </p>
                     {item.allocation ? (
-                      <p className="mt-2 text-xs text-sky-300">
+                      <p className="mt-2 text-xs text-sky-600 dark:text-sky-300">
                         Em locação: {clientName(item.allocation.client_id)}
                         {' · '}
                         {allocationSiteName(
@@ -259,7 +259,7 @@ export function EquipmentPage({
                         )}
                       </p>
                     ) : (
-                      <p className="mt-2 text-xs text-emerald-400">
+                      <p className="mt-2 text-xs text-emerald-600 dark:text-emerald-400">
                         Disponível na frota ADM
                       </p>
                     )}
@@ -270,8 +270,8 @@ export function EquipmentPage({
                   <span
                     className={`w-fit rounded-full px-3 py-1 text-xs font-semibold ${
                       item.active
-                        ? 'bg-emerald-950 text-emerald-400'
-                        : 'bg-zinc-800 text-zinc-400'
+                        ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400'
+                        : 'bg-muted text-muted-foreground'
                     }`}
                   >
                     {item.active ? 'Ativo' : 'Inativo'}
@@ -281,7 +281,7 @@ export function EquipmentPage({
                     <button
                       type="button"
                       onClick={() => onOpenAllocateModal(item)}
-                      className="flex items-center gap-2 rounded-lg border border-zinc-700 px-4 py-2 text-sm font-medium text-zinc-200 hover:bg-zinc-800"
+                      className="flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-accent"
                     >
                       <Link2 size={16} />
                       Alocar
@@ -290,7 +290,7 @@ export function EquipmentPage({
                     <button
                       type="button"
                       onClick={() => onEndAllocation(item.allocation!.id)}
-                      className="rounded-lg border border-zinc-700 px-4 py-2 text-sm font-medium text-zinc-200 hover:bg-zinc-800"
+                      className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-accent"
                     >
                       Encerrar locação
                     </button>
@@ -304,12 +304,12 @@ export function EquipmentPage({
 
       {newModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-5">
-          <section className="w-full max-w-md rounded-2xl border border-zinc-800 bg-zinc-900 p-6 shadow-2xl">
+          <section className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-2xl">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-sm text-zinc-500">Novo patrimônio</p>
+                <p className="text-sm text-muted-foreground">Novo patrimônio</p>
                 <h3 className="mt-1 text-xl font-bold">Cadastrar na frota ADM</h3>
-                <p className="mt-1 text-xs text-zinc-500">
+                <p className="mt-1 text-xs text-muted-foreground">
                   O equipamento pertence à ADM. Aloque depois a um cliente.
                 </p>
               </div>
@@ -317,7 +317,7 @@ export function EquipmentPage({
               <button
                 type="button"
                 onClick={onCloseNewModal}
-                className="rounded-lg p-2 text-zinc-400 hover:bg-zinc-800 hover:text-white"
+                className="rounded-lg p-2 text-muted-foreground hover:bg-accent hover:text-foreground"
               >
                 <X size={20} />
               </button>
@@ -327,7 +327,7 @@ export function EquipmentPage({
               <div>
                 <label
                   htmlFor="equipmentAssetTag"
-                  className="mb-2 block text-sm font-medium text-zinc-200"
+                  className="mb-2 block text-sm font-medium text-foreground"
                 >
                   Tag / patrimônio
                 </label>
@@ -339,14 +339,14 @@ export function EquipmentPage({
                   value={newAssetTag}
                   onChange={(event) => onNewAssetTagChange(event.target.value)}
                   placeholder="Ex.: EQ-001"
-                  className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-3 text-white outline-none placeholder:text-zinc-600 focus:border-red-500"
+                  className="w-full rounded-lg border border-border bg-background px-4 py-3 text-foreground outline-none placeholder:text-muted-foreground focus:border-red-500"
                 />
               </div>
 
               <div>
                 <label
                   htmlFor="equipmentDescription"
-                  className="mb-2 block text-sm font-medium text-zinc-200"
+                  className="mb-2 block text-sm font-medium text-foreground"
                 >
                   Descrição
                 </label>
@@ -359,17 +359,17 @@ export function EquipmentPage({
                     onNewDescriptionChange(event.target.value)
                   }
                   placeholder="Ex.: Gerador 150 kVA"
-                  className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-3 text-white outline-none placeholder:text-zinc-600 focus:border-red-500"
+                  className="w-full rounded-lg border border-border bg-background px-4 py-3 text-foreground outline-none placeholder:text-muted-foreground focus:border-red-500"
                 />
               </div>
 
               <div>
                 <label
                   htmlFor="equipmentSerial"
-                  className="mb-2 block text-sm font-medium text-zinc-200"
+                  className="mb-2 block text-sm font-medium text-foreground"
                 >
                   Número de série{' '}
-                  <span className="font-normal text-zinc-500">(opcional)</span>
+                  <span className="font-normal text-muted-foreground">(opcional)</span>
                 </label>
                 <input
                   id="equipmentSerial"
@@ -377,12 +377,12 @@ export function EquipmentPage({
                   value={newSerial}
                   onChange={(event) => onNewSerialChange(event.target.value)}
                   placeholder="Ex.: SN123456789"
-                  className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-3 text-white outline-none placeholder:text-zinc-600 focus:border-red-500"
+                  className="w-full rounded-lg border border-border bg-background px-4 py-3 text-foreground outline-none placeholder:text-muted-foreground focus:border-red-500"
                 />
               </div>
 
               {newMessage && (
-                <p className="rounded-lg border border-red-900 bg-red-950/40 p-3 text-sm text-red-200">
+                <p className="rounded-lg border border-red-300 bg-red-100 dark:border-red-900 dark:bg-red-950/40 p-3 text-sm text-red-700 dark:text-red-200">
                   {newMessage}
                 </p>
               )}
@@ -391,7 +391,7 @@ export function EquipmentPage({
                 <button
                   type="button"
                   onClick={onCloseNewModal}
-                  className="rounded-lg border border-zinc-700 px-4 py-3 text-sm font-medium text-zinc-200 hover:bg-zinc-800"
+                  className="rounded-lg border border-border px-4 py-3 text-sm font-medium text-foreground hover:bg-accent"
                 >
                   Cancelar
                 </button>
@@ -411,12 +411,12 @@ export function EquipmentPage({
 
       {allocateModalOpen && allocateEquipment && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-5">
-          <section className="w-full max-w-md rounded-2xl border border-zinc-800 bg-zinc-900 p-6 shadow-2xl">
+          <section className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-2xl">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-sm text-zinc-500">Locação</p>
+                <p className="text-sm text-muted-foreground">Locação</p>
                 <h3 className="mt-1 text-xl font-bold">Alocar equipamento</h3>
-                <p className="mt-1 text-xs text-zinc-500">
+                <p className="mt-1 text-xs text-muted-foreground">
                   {allocateEquipment.asset_tag} — {allocateEquipment.description}
                 </p>
               </div>
@@ -424,7 +424,7 @@ export function EquipmentPage({
               <button
                 type="button"
                 onClick={onCloseAllocateModal}
-                className="rounded-lg p-2 text-zinc-400 hover:bg-zinc-800 hover:text-white"
+                className="rounded-lg p-2 text-muted-foreground hover:bg-accent hover:text-foreground"
               >
                 <X size={20} />
               </button>
@@ -434,7 +434,7 @@ export function EquipmentPage({
               <div>
                 <label
                   htmlFor="allocateClient"
-                  className="mb-2 block text-sm font-medium text-zinc-200"
+                  className="mb-2 block text-sm font-medium text-foreground"
                 >
                   Cliente
                 </label>
@@ -445,7 +445,7 @@ export function EquipmentPage({
                   onChange={(event) =>
                     onAllocateClientChange(event.target.value)
                   }
-                  className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-3 text-white outline-none focus:border-red-500"
+                  className="w-full rounded-lg border border-border bg-background px-4 py-3 text-foreground outline-none focus:border-red-500"
                 >
                   <option value="">Selecione a empresa...</option>
                   {clients.map((client) => (
@@ -459,17 +459,17 @@ export function EquipmentPage({
               <div>
                 <label
                   htmlFor="allocateSite"
-                  className="mb-2 block text-sm font-medium text-zinc-200"
+                  className="mb-2 block text-sm font-medium text-foreground"
                 >
                   Obra{' '}
-                  <span className="font-normal text-zinc-500">(opcional)</span>
+                  <span className="font-normal text-muted-foreground">(opcional)</span>
                 </label>
                 <select
                   id="allocateSite"
                   value={allocateSiteId}
                   onChange={(event) => onAllocateSiteChange(event.target.value)}
                   disabled={!allocateClientId}
-                  className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-3 text-white outline-none focus:border-red-500 disabled:opacity-50"
+                  className="w-full rounded-lg border border-border bg-background px-4 py-3 text-foreground outline-none focus:border-red-500 disabled:opacity-50"
                 >
                   <option value="">Sem obra definida</option>
                   {sites.map((site) => (
@@ -481,7 +481,7 @@ export function EquipmentPage({
               </div>
 
               {allocateClient && (
-                <p className="text-xs text-zinc-500">
+                <p className="text-xs text-muted-foreground">
                   O equipamento permanece da ADM e ficará em locação em{' '}
                   {allocateClient.name}
                   {allocateSiteId
@@ -492,7 +492,7 @@ export function EquipmentPage({
               )}
 
               {allocateMessage && (
-                <p className="rounded-lg border border-red-900 bg-red-950/40 p-3 text-sm text-red-200">
+                <p className="rounded-lg border border-red-300 bg-red-100 dark:border-red-900 dark:bg-red-950/40 p-3 text-sm text-red-700 dark:text-red-200">
                   {allocateMessage}
                 </p>
               )}
@@ -501,7 +501,7 @@ export function EquipmentPage({
                 <button
                   type="button"
                   onClick={onCloseAllocateModal}
-                  className="rounded-lg border border-zinc-700 px-4 py-3 text-sm font-medium text-zinc-200 hover:bg-zinc-800"
+                  className="rounded-lg border border-border px-4 py-3 text-sm font-medium text-foreground hover:bg-accent"
                 >
                   Cancelar
                 </button>

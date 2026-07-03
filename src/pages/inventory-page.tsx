@@ -74,9 +74,9 @@ export function InventoryPage({
     <>
       <section className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-sm text-zinc-500">Peças e insumos</p>
+          <p className="text-sm text-muted-foreground">Peças e insumos</p>
           <h3 className="mt-1 text-2xl font-bold">Estoque</h3>
-          <p className="mt-2 text-sm text-zinc-400">
+          <p className="mt-2 text-sm text-muted-foreground">
             Controle de peças, estoque mínimo e movimentações.
           </p>
         </div>
@@ -91,20 +91,20 @@ export function InventoryPage({
       </section>
 
       {lowStock.length > 0 && (
-        <section className="mt-6 flex items-start gap-3 rounded-2xl border border-amber-500/30 bg-amber-950/20 p-4">
-          <AlertTriangle className="mt-0.5 shrink-0 text-amber-400" size={18} />
+        <section className="mt-6 flex items-start gap-3 rounded-2xl border border-amber-500/30 bg-amber-100 dark:bg-amber-950/20 p-4">
+          <AlertTriangle className="mt-0.5 shrink-0 text-amber-600 dark:text-amber-400" size={18} />
           <div>
-            <p className="text-sm font-semibold text-amber-200">
+            <p className="text-sm font-semibold text-amber-700 dark:text-amber-200">
               {lowStock.length} item(ns) abaixo do estoque mínimo
             </p>
-            <p className="mt-1 text-sm text-amber-100/80">
+            <p className="mt-1 text-sm text-amber-700/80 dark:text-amber-100/80">
               {lowStock.map((part) => part.name).join(', ')}
             </p>
           </div>
         </section>
       )}
 
-      <section className="mt-6 rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
+      <section className="mt-6 rounded-2xl border border-border bg-card p-6">
         <h4 className="font-bold">Movimentar estoque</h4>
         <form
           className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-5"
@@ -113,7 +113,7 @@ export function InventoryPage({
           <select
             value={movementPartId}
             onChange={(event) => onMovementPartChange(event.target.value)}
-            className="rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-3 text-white"
+            className="rounded-lg border border-border bg-background px-4 py-3 text-foreground"
             required
           >
             <option value="">Selecione a peça...</option>
@@ -130,7 +130,7 @@ export function InventoryPage({
                 event.target.value as 'entrada' | 'saida' | 'ajuste',
               )
             }
-            className="rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-3 text-white"
+            className="rounded-lg border border-border bg-background px-4 py-3 text-foreground"
           >
             <option value="entrada">Entrada</option>
             <option value="saida">Saída</option>
@@ -142,14 +142,14 @@ export function InventoryPage({
             value={movementQty}
             onChange={(event) => onMovementQtyChange(event.target.value)}
             placeholder="Quantidade"
-            className="rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-3 text-white"
+            className="rounded-lg border border-border bg-background px-4 py-3 text-foreground"
             required
           />
           <input
             value={movementNotes}
             onChange={(event) => onMovementNotesChange(event.target.value)}
             placeholder="Observação"
-            className="rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-3 text-white"
+            className="rounded-lg border border-border bg-background px-4 py-3 text-foreground"
           />
           <button
             type="submit"
@@ -160,29 +160,29 @@ export function InventoryPage({
           </button>
         </form>
         {movementMessage && (
-          <p className="mt-3 text-sm text-red-300">{movementMessage}</p>
+          <p className="mt-3 text-sm text-red-600 dark:text-red-300">{movementMessage}</p>
         )}
       </section>
 
-      <section className="mt-6 overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900">
-        <div className="flex items-center justify-between border-b border-zinc-800 px-6 py-5">
+      <section className="mt-6 overflow-hidden rounded-2xl border border-border bg-card">
+        <div className="flex items-center justify-between border-b border-border px-6 py-5">
           <h4 className="font-bold">Itens em estoque</h4>
-          <button type="button" onClick={onReload} className="text-sm text-red-400">
+          <button type="button" onClick={onReload} className="text-sm text-red-600 dark:text-red-400">
             Atualizar
           </button>
         </div>
-        {loading && <p className="p-8 text-sm text-zinc-400">Carregando...</p>}
-        {!loading && error && <p className="p-8 text-sm text-red-300">{error}</p>}
+        {loading && <p className="p-8 text-sm text-muted-foreground">Carregando...</p>}
+        {!loading && error && <p className="p-8 text-sm text-red-600 dark:text-red-300">{error}</p>}
         {!loading && !error && parts.length === 0 && (
           <div className="flex min-h-48 flex-col items-center justify-center gap-3 p-8 text-center">
-            <Package className="text-zinc-600" size={32} />
-            <p className="text-sm text-zinc-400">Nenhuma peça cadastrada.</p>
+            <Package className="text-muted-foreground" size={32} />
+            <p className="text-sm text-muted-foreground">Nenhuma peça cadastrada.</p>
           </div>
         )}
         {!loading && parts.length > 0 && (
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
-              <thead className="border-b border-zinc-800 bg-zinc-950/40 text-xs uppercase text-zinc-500">
+              <thead className="border-b border-border bg-background/40 text-xs uppercase text-muted-foreground">
                 <tr>
                   <th className="px-6 py-3 text-left">SKU</th>
                   <th className="px-4 py-3 text-left">Nome</th>
@@ -191,7 +191,7 @@ export function InventoryPage({
                   <th className="px-6 py-3 text-left">Status</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-zinc-800">
+              <tbody className="divide-y divide-border">
                 {parts.map((part) => (
                   <tr key={part.id}>
                     <td className="px-6 py-3 font-medium">{part.sku}</td>
@@ -200,9 +200,9 @@ export function InventoryPage({
                     <td className="px-4 py-3">{part.min_stock}</td>
                     <td className="px-6 py-3">
                       {isPartBelowMinimum(part) ? (
-                        <span className="text-amber-400">Abaixo do mínimo</span>
+                        <span className="text-amber-600 dark:text-amber-400">Abaixo do mínimo</span>
                       ) : (
-                        <span className="text-emerald-400">OK</span>
+                        <span className="text-emerald-600 dark:text-emerald-400">OK</span>
                       )}
                     </td>
                   </tr>
@@ -215,10 +215,10 @@ export function InventoryPage({
 
       {modalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-5">
-          <section className="w-full max-w-md rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
+          <section className="w-full max-w-md rounded-2xl border border-border bg-card p-6">
             <div className="flex items-start justify-between">
               <h3 className="text-xl font-bold">Nova peça</h3>
-              <button type="button" onClick={onCloseModal} className="text-zinc-400">
+              <button type="button" onClick={onCloseModal} className="text-muted-foreground">
                 <X size={20} />
               </button>
             </div>
@@ -228,20 +228,20 @@ export function InventoryPage({
                 onChange={(event) => onNewSkuChange(event.target.value)}
                 placeholder="SKU"
                 required
-                className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-3 text-white"
+                className="w-full rounded-lg border border-border bg-background px-4 py-3 text-foreground"
               />
               <input
                 value={newName}
                 onChange={(event) => onNewNameChange(event.target.value)}
                 placeholder="Nome da peça"
                 required
-                className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-3 text-white"
+                className="w-full rounded-lg border border-border bg-background px-4 py-3 text-foreground"
               />
               <input
                 value={newDescription}
                 onChange={(event) => onNewDescriptionChange(event.target.value)}
                 placeholder="Descrição (opcional)"
-                className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-3 text-white"
+                className="w-full rounded-lg border border-border bg-background px-4 py-3 text-foreground"
               />
               <div className="grid grid-cols-2 gap-3">
                 <input
@@ -250,7 +250,7 @@ export function InventoryPage({
                   value={newCurrentStock}
                   onChange={(event) => onNewCurrentStockChange(event.target.value)}
                   placeholder="Estoque inicial"
-                  className="rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-3 text-white"
+                  className="rounded-lg border border-border bg-background px-4 py-3 text-foreground"
                 />
                 <input
                   type="number"
@@ -258,10 +258,10 @@ export function InventoryPage({
                   value={newMinStock}
                   onChange={(event) => onNewMinStockChange(event.target.value)}
                   placeholder="Estoque mínimo"
-                  className="rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-3 text-white"
+                  className="rounded-lg border border-border bg-background px-4 py-3 text-foreground"
                 />
               </div>
-              {newMessage && <p className="text-sm text-red-300">{newMessage}</p>}
+              {newMessage && <p className="text-sm text-red-600 dark:text-red-300">{newMessage}</p>}
               <button
                 type="submit"
                 disabled={newLoading}

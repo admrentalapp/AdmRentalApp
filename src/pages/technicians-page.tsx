@@ -109,9 +109,9 @@ export function TechniciansPage({
     <>
       <section className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-sm text-zinc-500">Usuários e acessos</p>
+          <p className="text-sm text-muted-foreground">Usuários e acessos</p>
           <h3 className="mt-1 text-2xl font-bold">Usuários e acessos</h3>
-          <p className="mt-2 text-sm text-zinc-400">
+          <p className="mt-2 text-sm text-muted-foreground">
             Crie logins e defina o papel de cada usuário.
           </p>
         </div>
@@ -125,11 +125,11 @@ export function TechniciansPage({
         </button>
       </section>
 
-      <section className="mt-6 flex gap-3 rounded-2xl border border-blue-950 bg-blue-950/30 p-4 text-sm text-blue-200">
+      <section className="mt-6 flex gap-3 rounded-2xl border border-blue-300 bg-blue-100 dark:border-blue-950 dark:bg-blue-950/30 p-4 text-sm text-blue-700 dark:text-blue-200">
         <Info size={18} className="mt-0.5 shrink-0" />
         <p>
           Novos usuários são criados pelo app via Edge Function{' '}
-          <code className="text-blue-100">create-user</code> (deploy no Supabase).
+          <code className="text-blue-800 dark:text-blue-100">create-user</code> (deploy no Supabase).
           Aqui você também pode ajustar papel e empresa vinculada.
         </p>
       </section>
@@ -157,32 +157,32 @@ export function TechniciansPage({
         />
       </section>
 
-      <section className="mt-8 overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900">
-        <div className="border-b border-zinc-800 px-6 py-5">
+      <section className="mt-8 overflow-hidden rounded-2xl border border-border bg-card">
+        <div className="border-b border-border px-6 py-5">
           <h4 className="font-bold">Usuários cadastrados</h4>
-          <p className="mt-1 text-sm text-zinc-500">
+          <p className="mt-1 text-sm text-muted-foreground">
             Total de registros: {profiles.length}
           </p>
         </div>
 
         {loading && (
-          <div className="p-8 text-center text-sm text-zinc-400">
+          <div className="p-8 text-center text-sm text-muted-foreground">
             Carregando usuários...
           </div>
         )}
 
         {!loading && error && (
-          <div className="p-8 text-center text-sm text-red-300">{error}</div>
+          <div className="p-8 text-center text-sm text-red-600 dark:text-red-300">{error}</div>
         )}
 
         {!loading && !error && profiles.length === 0 && (
           <div className="flex min-h-64 flex-col items-center justify-center gap-4 p-8 text-center">
-            <Users className="text-zinc-600" size={34} />
+            <Users className="text-muted-foreground" size={34} />
             <div>
-              <p className="font-medium text-zinc-300">
+              <p className="font-medium text-foreground">
                 Nenhum usuário encontrado.
               </p>
-              <p className="mt-2 text-sm text-zinc-500">
+              <p className="mt-2 text-sm text-muted-foreground">
                 Cadastre usuários no Supabase Auth para gerenciá-los aqui.
               </p>
             </div>
@@ -190,7 +190,7 @@ export function TechniciansPage({
         )}
 
         {!loading && !error && profiles.length > 0 && (
-          <div className="divide-y divide-zinc-800">
+          <div className="divide-y divide-border">
             {profiles.map((managed) => {
               const isCurrentUser = managed.id === currentUserId
 
@@ -200,7 +200,7 @@ export function TechniciansPage({
                   className="flex flex-col gap-3 px-6 py-5 sm:flex-row sm:items-center sm:justify-between"
                 >
                   <div className="flex items-center gap-4">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-zinc-950 text-red-400">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-background text-red-600 dark:text-red-400">
                       <Users size={20} />
                     </div>
 
@@ -208,12 +208,12 @@ export function TechniciansPage({
                       <p className="font-semibold">
                         {managed.full_name || 'Sem nome'}
                         {isCurrentUser && (
-                          <span className="ml-2 text-xs font-normal text-zinc-500">
+                          <span className="ml-2 text-xs font-normal text-muted-foreground">
                             (você)
                           </span>
                         )}
                       </p>
-                      <p className="mt-1 text-xs text-zinc-500">
+                      <p className="mt-1 text-xs text-muted-foreground">
                         {profileSubtitle(managed)}
                       </p>
                     </div>
@@ -226,7 +226,7 @@ export function TechniciansPage({
                       type="button"
                       disabled={isCurrentUser}
                       onClick={() => onEditProfile(managed)}
-                      className="rounded-lg border border-zinc-700 px-4 py-2 text-sm font-medium text-zinc-200 hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-40"
+                      className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-accent disabled:cursor-not-allowed disabled:opacity-40"
                     >
                       Gerenciar
                     </button>
@@ -240,10 +240,10 @@ export function TechniciansPage({
 
       {editProfile && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-5">
-          <section className="w-full max-w-md rounded-2xl border border-zinc-800 bg-zinc-900 p-6 shadow-2xl">
+          <section className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-2xl">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-sm text-zinc-500">Gerenciar acesso</p>
+                <p className="text-sm text-muted-foreground">Gerenciar acesso</p>
                 <h3 className="mt-1 text-xl font-bold">
                   {editProfile.full_name || 'Sem nome'}
                 </h3>
@@ -252,7 +252,7 @@ export function TechniciansPage({
               <button
                 type="button"
                 onClick={onCloseEdit}
-                className="rounded-lg p-2 text-zinc-400 hover:bg-zinc-800 hover:text-white"
+                className="rounded-lg p-2 text-muted-foreground hover:bg-accent hover:text-foreground"
               >
                 <X size={20} />
               </button>
@@ -262,7 +262,7 @@ export function TechniciansPage({
               <div>
                 <label
                   htmlFor="profileRole"
-                  className="mb-2 block text-sm font-medium text-zinc-200"
+                  className="mb-2 block text-sm font-medium text-foreground"
                 >
                   Papel do usuário
                 </label>
@@ -273,7 +273,7 @@ export function TechniciansPage({
                   onChange={(event) =>
                     onEditRoleChange(event.target.value as UserRole)
                   }
-                  className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-3 text-white outline-none focus:border-red-500"
+                  className="w-full rounded-lg border border-border bg-background px-4 py-3 text-foreground outline-none focus:border-red-500"
                 >
                   <option value="cliente">Cliente</option>
                   <option value="manutencao_adm">Manutenção ADM</option>
@@ -286,7 +286,7 @@ export function TechniciansPage({
                 <div>
                   <label
                     htmlFor="profileClient"
-                    className="mb-2 block text-sm font-medium text-zinc-200"
+                    className="mb-2 block text-sm font-medium text-foreground"
                   >
                     Empresa vinculada
                   </label>
@@ -295,7 +295,7 @@ export function TechniciansPage({
                     id="profileClient"
                     value={editClientId}
                     onChange={(event) => onEditClientChange(event.target.value)}
-                    className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-3 text-white outline-none focus:border-red-500"
+                    className="w-full rounded-lg border border-border bg-background px-4 py-3 text-foreground outline-none focus:border-red-500"
                   >
                     <option value="">Selecione a empresa...</option>
                     {clients.map((client) => (
@@ -306,7 +306,7 @@ export function TechniciansPage({
                   </select>
 
                   {clients.length === 0 && (
-                    <p className="mt-2 text-xs text-amber-300">
+                    <p className="mt-2 text-xs text-amber-700 dark:text-amber-300">
                       Nenhuma empresa cadastrada. Cadastre um cliente antes de
                       vincular.
                     </p>
@@ -315,7 +315,7 @@ export function TechniciansPage({
               )}
 
               {isMaintenanceRole(editRole) && (
-                <p className="rounded-lg border border-zinc-800 bg-zinc-950/60 p-3 text-xs text-zinc-400">
+                <p className="rounded-lg border border-border bg-background/60 p-3 text-xs text-muted-foreground">
                   {editRole === 'manutencao_adm'
                     ? 'Profissional da equipe interna de manutenção da ADM.'
                     : 'Profissional de empresa terceira contratada para manutenção.'}
@@ -323,7 +323,7 @@ export function TechniciansPage({
               )}
 
               {editMessage && (
-                <p className="rounded-lg border border-red-900 bg-red-950/40 p-3 text-sm text-red-200">
+                <p className="rounded-lg border border-red-300 bg-red-100 dark:border-red-900 dark:bg-red-950/40 p-3 text-sm text-red-700 dark:text-red-200">
                   {editMessage}
                 </p>
               )}
@@ -332,7 +332,7 @@ export function TechniciansPage({
                 <button
                   type="button"
                   onClick={onCloseEdit}
-                  className="rounded-lg border border-zinc-700 px-4 py-3 text-sm font-medium text-zinc-200 hover:bg-zinc-800"
+                  className="rounded-lg border border-border px-4 py-3 text-sm font-medium text-foreground hover:bg-accent"
                 >
                   Cancelar
                 </button>
@@ -352,16 +352,16 @@ export function TechniciansPage({
 
       {newUserOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-5">
-          <section className="w-full max-w-md rounded-2xl border border-zinc-800 bg-zinc-900 p-6 shadow-2xl">
+          <section className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-2xl">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-sm text-zinc-500">Novo acesso</p>
+                <p className="text-sm text-muted-foreground">Novo acesso</p>
                 <h3 className="mt-1 text-xl font-bold">Criar usuário</h3>
               </div>
               <button
                 type="button"
                 onClick={onCloseNewUser}
-                className="rounded-lg p-2 text-zinc-400 hover:bg-zinc-800"
+                className="rounded-lg p-2 text-muted-foreground hover:bg-accent"
               >
                 <X size={20} />
               </button>
@@ -374,7 +374,7 @@ export function TechniciansPage({
                 onChange={(event) => onNewUserNameChange(event.target.value)}
                 placeholder="Nome completo"
                 required
-                className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-3 text-white"
+                className="w-full rounded-lg border border-border bg-background px-4 py-3 text-foreground"
               />
               <input
                 type="email"
@@ -382,7 +382,7 @@ export function TechniciansPage({
                 onChange={(event) => onNewUserEmailChange(event.target.value)}
                 placeholder="E-mail de login"
                 required
-                className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-3 text-white"
+                className="w-full rounded-lg border border-border bg-background px-4 py-3 text-foreground"
               />
               <input
                 type="password"
@@ -391,14 +391,14 @@ export function TechniciansPage({
                 placeholder="Senha inicial (mín. 6 caracteres)"
                 required
                 minLength={6}
-                className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-3 text-white"
+                className="w-full rounded-lg border border-border bg-background px-4 py-3 text-foreground"
               />
               <select
                 value={newUserRole}
                 onChange={(event) =>
                   onNewUserRoleChange(event.target.value as UserRole)
                 }
-                className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-3 text-white"
+                className="w-full rounded-lg border border-border bg-background px-4 py-3 text-foreground"
               >
                 <option value="cliente">Cliente</option>
                 <option value="manutencao_adm">Manutenção ADM</option>
@@ -409,7 +409,7 @@ export function TechniciansPage({
                 <select
                   value={newUserClientId}
                   onChange={(event) => onNewUserClientChange(event.target.value)}
-                  className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-3 text-white"
+                  className="w-full rounded-lg border border-border bg-background px-4 py-3 text-foreground"
                   required
                 >
                   <option value="">Empresa vinculada...</option>
@@ -421,7 +421,7 @@ export function TechniciansPage({
                 </select>
               )}
               {newUserMessage && (
-                <p className="rounded-lg border border-red-900 bg-red-950/40 p-3 text-sm text-red-200">
+                <p className="rounded-lg border border-red-300 bg-red-100 dark:border-red-900 dark:bg-red-950/40 p-3 text-sm text-red-700 dark:text-red-200">
                   {newUserMessage}
                 </p>
               )}

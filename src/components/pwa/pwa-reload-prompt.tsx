@@ -15,11 +15,11 @@ export function PwaReloadPrompt() {
   return (
     <div
       role="status"
-      className="fixed inset-x-4 bottom-4 z-100 mx-auto max-w-lg rounded-2xl border border-zinc-700 bg-zinc-900 p-4 text-white shadow-2xl sm:inset-x-auto sm:right-6"
+      className="fixed inset-x-4 bottom-4 z-100 mx-auto max-w-lg rounded-2xl border border-border bg-card p-4 text-foreground shadow-2xl sm:inset-x-auto sm:right-6"
     >
       {needRefresh && (
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-sm text-zinc-300">
+          <p className="text-sm text-muted-foreground">
             Nova versão disponível. Atualize para carregar as mudanças.
           </p>
           <div className="flex gap-2">

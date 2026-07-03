@@ -216,23 +216,23 @@ export function ClientNewTicketModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/75 p-5">
-      <section className="my-auto w-full max-w-2xl rounded-2xl border border-zinc-800 bg-zinc-900 p-6 shadow-2xl">
+      <section className="my-auto w-full max-w-2xl rounded-2xl border border-border bg-card p-6 shadow-2xl">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-sm text-zinc-500">Nova solicitação</p>
+            <p className="text-sm text-muted-foreground">Nova solicitação</p>
             <h3 className="mt-1 text-xl font-bold">Abrir chamado</h3>
-            <p className="mt-1 text-xs text-zinc-500">{companyName}</p>
+            <p className="mt-1 text-xs text-muted-foreground">{companyName}</p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg p-2 text-zinc-400 hover:bg-zinc-800"
+            className="rounded-lg p-2 text-muted-foreground hover:bg-accent"
           >
             <X size={20} />
           </button>
         </div>
 
-        <div className="mt-5 rounded-xl border border-amber-900/60 bg-amber-950/20 p-4 text-sm text-amber-100">
+        <div className="mt-5 rounded-xl border border-amber-300 bg-amber-100 dark:border-amber-900/60 dark:bg-amber-950/20 p-4 text-sm text-amber-800 dark:text-amber-100">
           <div className="flex gap-3">
             <AlertTriangle className="mt-0.5 shrink-0" size={18} />
             <p>
@@ -248,7 +248,7 @@ export function ClientNewTicketModal({
             <div>
               <label
                 htmlFor="clientTicketSite"
-                className="mb-2 block text-sm font-medium text-zinc-200"
+                className="mb-2 block text-sm font-medium text-foreground"
               >
                 Obra
               </label>
@@ -257,7 +257,7 @@ export function ClientNewTicketModal({
                 required
                 value={siteId}
                 onChange={(event) => setSiteId(event.target.value)}
-                className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-3 text-white outline-none focus:border-red-500"
+                className="w-full rounded-lg border border-border bg-background px-4 py-3 text-foreground outline-none focus:border-red-500"
               >
                 <option value="">Selecione a obra</option>
                 {sites.map((site) => (
@@ -271,7 +271,7 @@ export function ClientNewTicketModal({
             <div>
               <label
                 htmlFor="clientTicketEquipment"
-                className="mb-2 block text-sm font-medium text-zinc-200"
+                className="mb-2 block text-sm font-medium text-foreground"
               >
                 Equipamento
               </label>
@@ -281,7 +281,7 @@ export function ClientNewTicketModal({
                 disabled={!siteId}
                 value={equipmentId}
                 onChange={(event) => setEquipmentId(event.target.value)}
-                className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-3 text-white outline-none focus:border-red-500 disabled:cursor-not-allowed disabled:opacity-60"
+                className="w-full rounded-lg border border-border bg-background px-4 py-3 text-foreground outline-none focus:border-red-500 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <option value="">
                   {siteId ? 'Selecione o equipamento' : 'Selecione a obra primeiro'}
@@ -298,7 +298,7 @@ export function ClientNewTicketModal({
           <div>
             <label
               htmlFor="clientTicketIncidentAt"
-              className="mb-2 block text-sm font-medium text-zinc-200"
+              className="mb-2 block text-sm font-medium text-foreground"
             >
               Data e hora da avaria
             </label>
@@ -309,7 +309,7 @@ export function ClientNewTicketModal({
               value={incidentAt}
               max={defaultIncidentAtValue()}
               onChange={(event) => setIncidentAt(event.target.value)}
-              className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-3 text-white outline-none focus:border-red-500"
+              className="w-full rounded-lg border border-border bg-background px-4 py-3 text-foreground outline-none focus:border-red-500"
             />
           </div>
 
@@ -317,7 +317,7 @@ export function ClientNewTicketModal({
             <div>
               <label
                 htmlFor="clientTicketContactName"
-                className="mb-2 block text-sm font-medium text-zinc-200"
+                className="mb-2 block text-sm font-medium text-foreground"
               >
                 Responsável na obra
               </label>
@@ -328,14 +328,14 @@ export function ClientNewTicketModal({
                 value={siteContactName}
                 onChange={(event) => setSiteContactName(event.target.value)}
                 placeholder="Nome de quem está na obra"
-                className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-3 text-white outline-none focus:border-red-500"
+                className="w-full rounded-lg border border-border bg-background px-4 py-3 text-foreground outline-none focus:border-red-500"
               />
             </div>
 
             <div>
               <label
                 htmlFor="clientTicketContactPhone"
-                className="mb-2 block text-sm font-medium text-zinc-200"
+                className="mb-2 block text-sm font-medium text-foreground"
               >
                 Telefone do contato
               </label>
@@ -346,7 +346,7 @@ export function ClientNewTicketModal({
                 value={siteContactPhone}
                 onChange={(event) => setSiteContactPhone(event.target.value)}
                 placeholder="(00) 00000-0000"
-                className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-3 text-white outline-none focus:border-red-500"
+                className="w-full rounded-lg border border-border bg-background px-4 py-3 text-foreground outline-none focus:border-red-500"
               />
             </div>
           </div>
@@ -354,7 +354,7 @@ export function ClientNewTicketModal({
           <div>
             <label
               htmlFor="clientTicketTitle"
-              className="mb-2 block text-sm font-medium text-zinc-200"
+              className="mb-2 block text-sm font-medium text-foreground"
             >
               Título
             </label>
@@ -365,14 +365,14 @@ export function ClientNewTicketModal({
               value={title}
               onChange={(event) => setTitle(event.target.value)}
               placeholder="Ex.: Equipamento parou de funcionar"
-              className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-3 text-white outline-none focus:border-red-500"
+              className="w-full rounded-lg border border-border bg-background px-4 py-3 text-foreground outline-none focus:border-red-500"
             />
           </div>
 
           <div>
             <label
               htmlFor="clientTicketDescription"
-              className="mb-2 block text-sm font-medium text-zinc-200"
+              className="mb-2 block text-sm font-medium text-foreground"
             >
               Descrição detalhada
             </label>
@@ -383,18 +383,18 @@ export function ClientNewTicketModal({
               value={description}
               onChange={(event) => setDescription(event.target.value)}
               placeholder="Descreva o que aconteceu, sintomas, mensagens de erro e o que já foi verificado..."
-              className="w-full resize-none rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-3 text-white outline-none focus:border-red-500"
+              className="w-full resize-none rounded-lg border border-border bg-background px-4 py-3 text-foreground outline-none focus:border-red-500"
             />
           </div>
 
-          <div className="rounded-xl border border-zinc-800 bg-zinc-950/60 p-4">
+          <div className="rounded-xl border border-border bg-background/60 p-4">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
               <div>
-                <div className="flex items-center gap-2 text-sm font-medium text-zinc-200">
+                <div className="flex items-center gap-2 text-sm font-medium text-foreground">
                   <Paperclip size={16} />
                   Fotos e documentos
                 </div>
-                <p className="mt-1 text-xs text-zinc-500">
+                <p className="mt-1 text-xs text-muted-foreground">
                   Envie imagens ou PDF da avaria (até {MAX_OPENING_ATTACHMENTS}{' '}
                   arquivos, 10 MB cada).
                 </p>
@@ -414,7 +414,7 @@ export function ClientNewTicketModal({
                   type="button"
                   disabled={loading || attachments.length >= MAX_OPENING_ATTACHMENTS}
                   onClick={() => fileInputRef.current?.click()}
-                  className="flex items-center justify-center gap-2 rounded-lg border border-zinc-700 px-4 py-2.5 text-sm font-medium text-zinc-200 hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="flex items-center justify-center gap-2 rounded-lg border border-border px-4 py-2.5 text-sm font-medium text-foreground hover:bg-accent disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <Upload size={16} />
                   Adicionar anexos
@@ -427,13 +427,13 @@ export function ClientNewTicketModal({
                 {attachments.map((file, index) => (
                   <li
                     key={`${file.name}-${file.size}-${index}`}
-                    className="flex items-center justify-between gap-3 rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm"
+                    className="flex items-center justify-between gap-3 rounded-lg border border-border bg-card px-3 py-2 text-sm"
                   >
-                    <span className="truncate text-zinc-300">{file.name}</span>
+                    <span className="truncate text-foreground">{file.name}</span>
                     <button
                       type="button"
                       onClick={() => removeAttachment(index)}
-                      className="shrink-0 rounded-md p-1 text-zinc-400 hover:bg-zinc-800 hover:text-white"
+                      className="shrink-0 rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
                     >
                       <X size={14} />
                     </button>
@@ -444,7 +444,7 @@ export function ClientNewTicketModal({
           </div>
 
           {message && (
-            <p className="rounded-lg border border-red-900 bg-red-950/40 p-3 text-sm text-red-200">
+            <p className="rounded-lg border border-red-300 bg-red-100 dark:border-red-900 dark:bg-red-950/40 p-3 text-sm text-red-700 dark:text-red-200">
               {message}
             </p>
           )}
@@ -453,7 +453,7 @@ export function ClientNewTicketModal({
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg border border-zinc-700 px-4 py-3 text-sm font-medium hover:bg-zinc-800"
+              className="rounded-lg border border-border px-4 py-3 text-sm font-medium hover:bg-accent"
             >
               Cancelar
             </button>

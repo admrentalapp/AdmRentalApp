@@ -31,8 +31,8 @@ export function ClientApprovalSection({
 
   if (loading) {
     return (
-      <section className="mt-6 rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
-        <p className="text-sm text-zinc-400">Carregando aprovação...</p>
+      <section className="mt-6 rounded-2xl border border-border bg-card p-6">
+        <p className="text-sm text-muted-foreground">Carregando aprovação...</p>
       </section>
     )
   }
@@ -48,28 +48,28 @@ export function ClientApprovalSection({
       <section
         className={`mt-6 rounded-2xl border p-6 ${
           approved
-            ? 'border-emerald-900/60 bg-emerald-950/20'
-            : 'border-red-900/60 bg-red-950/20'
+            ? 'border-emerald-300 bg-emerald-100 dark:border-emerald-900/60 dark:bg-emerald-950/20'
+            : 'border-red-300 bg-red-100 dark:border-red-900/60 dark:bg-red-950/20'
         }`}
       >
         <div className="flex items-start gap-3">
           {approved ? (
             <CheckCircle2
-              className="mt-0.5 shrink-0 text-emerald-400"
+              className="mt-0.5 shrink-0 text-emerald-600 dark:text-emerald-400"
               size={22}
             />
           ) : (
-            <XCircle className="mt-0.5 shrink-0 text-red-400" size={22} />
+            <XCircle className="mt-0.5 shrink-0 text-red-600 dark:text-red-400" size={22} />
           )}
           <div>
-            <h4 className="font-bold text-white">
+            <h4 className="font-bold text-foreground">
               {approvalDecisionLabel(approval.decision)} pelo cliente
             </h4>
-            <p className="mt-1 text-sm text-zinc-400">
+            <p className="mt-1 text-sm text-muted-foreground">
               Respondido em {formatDateTime(approval.responded_at)}
             </p>
             {approval.notes && (
-              <p className="mt-3 text-sm leading-relaxed text-zinc-300">
+              <p className="mt-3 text-sm leading-relaxed text-foreground">
                 {approval.notes}
               </p>
             )}
@@ -86,19 +86,19 @@ export function ClientApprovalSection({
   }
 
   return (
-    <section className="mt-6 rounded-2xl border border-purple-900/50 bg-purple-950/20 p-6">
-      <h4 className="font-bold text-white">Aprovação necessária</h4>
-      <p className="mt-2 text-sm text-zinc-400">
+    <section className="mt-6 rounded-2xl border border-purple-300 bg-purple-100 dark:border-purple-900/50 dark:bg-purple-950/20 p-6">
+      <h4 className="font-bold text-foreground">Aprovação necessária</h4>
+      <p className="mt-2 text-sm text-muted-foreground">
         O laudo de inspeção indica responsabilidade do cliente. Revise as
         recomendações abaixo e confirme se autoriza a execução dos serviços.
       </p>
 
       {inspection && (
-        <div className="mt-4 rounded-xl border border-zinc-800 bg-zinc-950/60 p-4">
-          <p className="text-xs uppercase tracking-wide text-zinc-500">
+        <div className="mt-4 rounded-xl border border-border bg-background/60 p-4">
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">
             Recomendações da manutenção
           </p>
-          <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-zinc-300">
+          <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-foreground">
             {inspection.recommendation}
           </p>
         </div>
@@ -108,10 +108,10 @@ export function ClientApprovalSection({
         <div>
           <label
             htmlFor="approvalNotes"
-            className="mb-2 block text-sm font-medium text-zinc-200"
+            className="mb-2 block text-sm font-medium text-foreground"
           >
             Observações{' '}
-            <span className="font-normal text-zinc-500">(opcional)</span>
+            <span className="font-normal text-muted-foreground">(opcional)</span>
           </label>
           <textarea
             id="approvalNotes"
@@ -119,12 +119,12 @@ export function ClientApprovalSection({
             value={notes}
             onChange={(event) => setNotes(event.target.value)}
             placeholder="Comentários sobre a aprovação ou motivo da recusa..."
-            className="w-full resize-none rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-3 text-white outline-none placeholder:text-zinc-600 focus:border-red-500"
+            className="w-full resize-none rounded-lg border border-border bg-background px-4 py-3 text-foreground outline-none placeholder:text-muted-foreground focus:border-red-500"
           />
         </div>
 
         {submitError && (
-          <p className="rounded-lg border border-red-900 bg-red-950/40 p-3 text-sm text-red-200">
+          <p className="rounded-lg border border-red-300 bg-red-100 dark:border-red-900 dark:bg-red-950/40 p-3 text-sm text-red-700 dark:text-red-200">
             {submitError}
           </p>
         )}
@@ -137,7 +137,7 @@ export function ClientApprovalSection({
             className={`inline-flex items-center justify-center gap-2 rounded-lg border px-5 py-3 text-sm font-semibold transition ${
               pendingDecision === 'recusado'
                 ? 'border-red-500 bg-red-600 text-white'
-                : 'border-zinc-700 text-zinc-200 hover:bg-zinc-800'
+                : 'border-border text-foreground hover:bg-accent'
             }`}
           >
             <XCircle size={16} />
@@ -150,7 +150,7 @@ export function ClientApprovalSection({
             className={`inline-flex items-center justify-center gap-2 rounded-lg border px-5 py-3 text-sm font-semibold transition ${
               pendingDecision === 'aprovado'
                 ? 'border-emerald-500 bg-emerald-600 text-white'
-                : 'border-zinc-700 text-zinc-200 hover:bg-zinc-800'
+                : 'border-border text-foreground hover:bg-accent'
             }`}
           >
             <CheckCircle2 size={16} />

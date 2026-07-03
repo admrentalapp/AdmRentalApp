@@ -47,11 +47,11 @@ function ChartTooltip({
   if (!active || !payload?.length) return null
 
   return (
-    <div className="rounded-lg border border-zinc-700 bg-zinc-950/95 px-3 py-2 text-xs shadow-xl backdrop-blur">
+    <div className="rounded-lg border border-border bg-background/95 px-3 py-2 text-xs shadow-xl backdrop-blur">
       {payload.map((entry) => (
-        <p key={entry.name} className="text-zinc-400">
+        <p key={entry.name} className="text-muted-foreground">
           {entry.payload?.name ?? entry.name}:{' '}
-          <span className="font-semibold text-zinc-100">{entry.value}</span>
+          <span className="font-semibold text-foreground">{entry.value}</span>
         </p>
       ))}
     </div>
@@ -71,12 +71,12 @@ function SlaTooltip({
   if (!point) return null
 
   return (
-    <div className="rounded-lg border border-zinc-700 bg-zinc-950/95 px-3 py-2 text-xs shadow-xl backdrop-blur">
-      <p className="font-medium text-zinc-200">{point.label}</p>
-      <p className="mt-1 text-zinc-400">
-        SLA: <span className="font-semibold text-emerald-400">{point.rate}%</span>
+    <div className="rounded-lg border border-border bg-background/95 px-3 py-2 text-xs shadow-xl backdrop-blur">
+      <p className="font-medium text-foreground">{point.label}</p>
+      <p className="mt-1 text-muted-foreground">
+        SLA: <span className="font-semibold text-emerald-600 dark:text-emerald-400">{point.rate}%</span>
       </p>
-      <p className="mt-0.5 text-zinc-500">
+      <p className="mt-0.5 text-muted-foreground">
         {point.compliant}/{point.total} chamados
       </p>
     </div>
@@ -117,8 +117,8 @@ function DonutChart({
         </ResponsiveContainer>
 
         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-3xl font-bold text-white">{total}</span>
-          <span className="text-xs text-zinc-500">{centerLabel}</span>
+          <span className="text-3xl font-bold text-foreground">{total}</span>
+          <span className="text-xs text-muted-foreground">{centerLabel}</span>
         </div>
       </div>
 
@@ -132,13 +132,13 @@ function DonutChart({
                 className="h-2.5 w-2.5 shrink-0 rounded-full"
                 style={{ backgroundColor: colorFor(entry) }}
               />
-              <span className="flex-1 truncate text-sm text-zinc-300">
+              <span className="flex-1 truncate text-sm text-foreground">
                 {entry.name}
               </span>
-              <span className="text-sm font-semibold text-white">
+              <span className="text-sm font-semibold text-foreground">
                 {entry.value}
               </span>
-              <span className="w-10 text-right text-xs text-zinc-500">
+              <span className="w-10 text-right text-xs text-muted-foreground">
                 {percent}%
               </span>
             </div>
@@ -226,7 +226,7 @@ export function PriorityDonutChart({ data }: { data: ChartSlice[] }) {
 export function EquipmentFailureChart({ data }: { data: EquipmentFailureRow[] }) {
   if (data.length === 0) {
     return (
-      <div className="flex h-64 items-center justify-center rounded-xl border border-dashed border-zinc-800 text-sm text-zinc-500">
+      <div className="flex h-64 items-center justify-center rounded-xl border border-dashed border-border text-sm text-muted-foreground">
         Sem dados de equipamentos ainda.
       </div>
     )

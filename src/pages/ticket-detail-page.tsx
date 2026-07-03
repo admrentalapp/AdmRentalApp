@@ -93,23 +93,23 @@ export function TicketDetailPage({
       <button
         type="button"
         onClick={onBack}
-        className="flex items-center gap-2 text-sm font-medium text-zinc-400 hover:text-white"
+        className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground"
       >
         <ArrowLeft size={16} />
         Voltar para chamados
       </button>
 
-      <section className="mt-5 rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
+      <section className="mt-5 rounded-2xl border border-border bg-card p-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <p className="text-sm text-zinc-500">
+            <p className="text-sm text-muted-foreground">
               OS #{ticket.ticket_number}
             </p>
             <h3 className="mt-1 text-2xl font-bold">{ticket.title}</h3>
-            <p className="mt-2 text-sm text-zinc-400">
+            <p className="mt-2 text-sm text-muted-foreground">
               Cliente: {client?.name ?? '—'}
             </p>
-            <p className="mt-1 text-xs text-zinc-500">
+            <p className="mt-1 text-xs text-muted-foreground">
               Aberto em {formatDateTime(ticket.created_at)}
             </p>
           </div>
@@ -120,9 +120,9 @@ export function TicketDetailPage({
           </div>
         </div>
 
-        <div className="mt-6 rounded-xl border border-zinc-800 bg-zinc-950 p-4">
-          <p className="text-sm font-medium text-zinc-300">Descrição</p>
-          <p className="mt-2 text-sm leading-relaxed text-zinc-400">
+        <div className="mt-6 rounded-xl border border-border bg-background p-4">
+          <p className="text-sm font-medium text-foreground">Descrição</p>
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
             {ticket.description}
           </p>
         </div>
@@ -134,9 +134,9 @@ export function TicketDetailPage({
         />
 
         {assignedTechnician && (
-          <p className="mt-4 text-sm text-zinc-400">
+          <p className="mt-4 text-sm text-muted-foreground">
             Manutenção atual:{' '}
-            <span className="text-zinc-200">
+            <span className="text-foreground">
               {assignedTechnician.full_name || 'Sem nome'}
               {' · '}
               {roleLabel(assignedTechnician.role)}
@@ -155,11 +155,11 @@ export function TicketDetailPage({
       />
 
       {!approvalLoading && ticket.status === 'aguardando_aprovacao' && !approval && (
-        <section className="mt-6 rounded-2xl border border-purple-900/50 bg-purple-950/20 p-5">
-          <p className="text-sm font-semibold text-purple-200">
+        <section className="mt-6 rounded-2xl border border-purple-300 bg-purple-100 dark:border-purple-900/50 dark:bg-purple-950/20 p-5">
+          <p className="text-sm font-semibold text-purple-700 dark:text-purple-200">
             Aguardando aprovação do cliente
           </p>
-          <p className="mt-1 text-sm text-zinc-400">
+          <p className="mt-1 text-sm text-muted-foreground">
             O cliente precisa aprovar ou recusar o laudo e os serviços
             recomendados antes da execução.
           </p>
@@ -167,12 +167,12 @@ export function TicketDetailPage({
       )}
 
       {!approvalLoading && approval && (
-        <section className="mt-6 rounded-2xl border border-zinc-800 bg-zinc-900 p-5">
-          <p className="text-sm font-semibold text-zinc-200">
+        <section className="mt-6 rounded-2xl border border-border bg-card p-5">
+          <p className="text-sm font-semibold text-foreground">
             Resposta do cliente: {approvalDecisionLabel(approval.decision)}
           </p>
           {approval.notes && (
-            <p className="mt-2 text-sm text-zinc-400">{approval.notes}</p>
+            <p className="mt-2 text-sm text-muted-foreground">{approval.notes}</p>
           )}
         </section>
       )}
@@ -192,9 +192,9 @@ export function TicketDetailPage({
         onUpload={onUpload}
       />
 
-      <section className="mt-6 rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
+      <section className="mt-6 rounded-2xl border border-border bg-card p-6">
         <h4 className="font-bold">Triagem e gestão</h4>
-        <p className="mt-1 text-sm text-zinc-500">
+        <p className="mt-1 text-sm text-muted-foreground">
           Atualize status, prioridade e atribua manutenção (ADM ou externa).
         </p>
 
@@ -203,7 +203,7 @@ export function TicketDetailPage({
             <div>
               <label
                 htmlFor="editTicketStatus"
-                className="mb-2 block text-sm font-medium text-zinc-200"
+                className="mb-2 block text-sm font-medium text-foreground"
               >
                 Status
               </label>
@@ -213,7 +213,7 @@ export function TicketDetailPage({
                 onChange={(event) =>
                   onEditStatusChange(event.target.value as TicketStatus)
                 }
-                className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-3 text-white outline-none focus:border-red-500"
+                className="w-full rounded-lg border border-border bg-background px-4 py-3 text-foreground outline-none focus:border-red-500"
               >
                 {TICKET_STATUSES.map((status) => (
                   <option key={status} value={status}>
@@ -226,7 +226,7 @@ export function TicketDetailPage({
             <div>
               <label
                 htmlFor="editTicketPriority"
-                className="mb-2 block text-sm font-medium text-zinc-200"
+                className="mb-2 block text-sm font-medium text-foreground"
               >
                 Prioridade
               </label>
@@ -236,7 +236,7 @@ export function TicketDetailPage({
                 onChange={(event) =>
                   onEditPriorityChange(event.target.value as TicketPriority)
                 }
-                className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-3 text-white outline-none focus:border-red-500"
+                className="w-full rounded-lg border border-border bg-background px-4 py-3 text-foreground outline-none focus:border-red-500"
               >
                 {TICKET_PRIORITIES.map((priority) => (
                   <option key={priority} value={priority}>
@@ -250,16 +250,16 @@ export function TicketDetailPage({
           <div>
             <label
               htmlFor="editTicketTechnician"
-              className="mb-2 block text-sm font-medium text-zinc-200"
+              className="mb-2 block text-sm font-medium text-foreground"
             >
               Manutenção responsável{' '}
-              <span className="font-normal text-zinc-500">(opcional)</span>
+              <span className="font-normal text-muted-foreground">(opcional)</span>
             </label>
             <select
               id="editTicketTechnician"
               value={editTechnicianId}
               onChange={(event) => onEditTechnicianChange(event.target.value)}
-              className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-3 text-white outline-none focus:border-red-500"
+              className="w-full rounded-lg border border-border bg-background px-4 py-3 text-foreground outline-none focus:border-red-500"
             >
               <option value="">Nenhum profissional atribuído</option>
               {technicians.map((technician) => (
@@ -271,7 +271,7 @@ export function TicketDetailPage({
             </select>
 
             {technicians.length === 0 && (
-              <p className="mt-2 text-xs text-amber-300">
+              <p className="mt-2 text-xs text-amber-700 dark:text-amber-300">
                 Nenhum profissional de manutenção cadastrado. Defina o papel em
                 Usuários.
               </p>
@@ -279,7 +279,7 @@ export function TicketDetailPage({
           </div>
 
           {editMessage && (
-            <p className="rounded-lg border border-red-900 bg-red-950/40 p-3 text-sm text-red-200">
+            <p className="rounded-lg border border-red-300 bg-red-100 dark:border-red-900 dark:bg-red-950/40 p-3 text-sm text-red-700 dark:text-red-200">
               {editMessage}
             </p>
           )}
@@ -288,7 +288,7 @@ export function TicketDetailPage({
             <button
               type="button"
               onClick={onBack}
-              className="rounded-lg border border-zinc-700 px-4 py-3 text-sm font-medium text-zinc-200 hover:bg-zinc-800"
+              className="rounded-lg border border-border px-4 py-3 text-sm font-medium text-foreground hover:bg-accent"
             >
               Cancelar
             </button>

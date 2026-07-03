@@ -61,28 +61,28 @@ export function ReportsPage({
   return (
     <>
       <section>
-        <p className="text-sm text-zinc-500">Exportações e indicadores</p>
+        <p className="text-sm text-muted-foreground">Exportações e indicadores</p>
         <h3 className="mt-1 text-2xl font-bold">Relatórios</h3>
-        <p className="mt-2 text-sm text-zinc-400">
+        <p className="mt-2 text-sm text-muted-foreground">
           Resumo operacional e exportação de dados em CSV.
         </p>
       </section>
 
       <section className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5">
-          <p className="text-sm text-zinc-500">Total de chamados</p>
+        <div className="rounded-2xl border border-border bg-card p-5">
+          <p className="text-sm text-muted-foreground">Total de chamados</p>
           <p className="mt-2 text-3xl font-bold">{tickets.length}</p>
         </div>
-        <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5">
-          <p className="text-sm text-zinc-500">Abertos</p>
+        <div className="rounded-2xl border border-border bg-card p-5">
+          <p className="text-sm text-muted-foreground">Abertos</p>
           <p className="mt-2 text-3xl font-bold">{stats.openCount}</p>
         </div>
-        <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5">
-          <p className="text-sm text-zinc-500">Concluídos no mês</p>
+        <div className="rounded-2xl border border-border bg-card p-5">
+          <p className="text-sm text-muted-foreground">Concluídos no mês</p>
           <p className="mt-2 text-3xl font-bold">{stats.completedThisMonth}</p>
         </div>
-        <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5">
-          <p className="text-sm text-zinc-500">Peças críticas</p>
+        <div className="rounded-2xl border border-border bg-card p-5">
+          <p className="text-sm text-muted-foreground">Peças críticas</p>
           <p className="mt-2 text-3xl font-bold">{lowStock.length}</p>
         </div>
       </section>
@@ -91,35 +91,35 @@ export function ReportsPage({
         <button
           type="button"
           onClick={exportTickets}
-          className="flex items-start gap-4 rounded-2xl border border-zinc-800 bg-zinc-900 p-6 text-left hover:border-zinc-700"
+          className="flex items-start gap-4 rounded-2xl border border-border bg-card p-6 text-left hover:border-border"
         >
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-red-500/10 text-red-400">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-red-500/10 text-red-600 dark:text-red-400">
             <FileSpreadsheet size={18} />
           </div>
           <div>
             <p className="font-semibold">Exportar chamados</p>
-            <p className="mt-1 text-sm text-zinc-500">
+            <p className="mt-1 text-sm text-muted-foreground">
               CSV com OS, status, prioridade e datas.
             </p>
           </div>
-          <Download className="ml-auto text-zinc-500" size={18} />
+          <Download className="ml-auto text-muted-foreground" size={18} />
         </button>
 
         <button
           type="button"
           onClick={exportParts}
-          className="flex items-start gap-4 rounded-2xl border border-zinc-800 bg-zinc-900 p-6 text-left hover:border-zinc-700"
+          className="flex items-start gap-4 rounded-2xl border border-border bg-card p-6 text-left hover:border-border"
         >
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-500/10 text-amber-400">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400">
             <FileSpreadsheet size={18} />
           </div>
           <div>
             <p className="font-semibold">Exportar estoque</p>
-            <p className="mt-1 text-sm text-zinc-500">
+            <p className="mt-1 text-sm text-muted-foreground">
               CSV com SKU, quantidades e alertas de mínimo.
             </p>
           </div>
-          <Download className="ml-auto text-zinc-500" size={18} />
+          <Download className="ml-auto text-muted-foreground" size={18} />
         </button>
       </section>
     </>

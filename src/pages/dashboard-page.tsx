@@ -85,16 +85,16 @@ function SectionCard({
 }) {
   return (
     <div
-      className={`rounded-2xl border border-zinc-800/80 bg-zinc-900/60 p-6 shadow-lg shadow-black/20 backdrop-blur-sm ${className}`}
+      className={`rounded-2xl border border-border/80 bg-card/60 p-6 shadow-lg shadow-black/20 backdrop-blur-sm ${className}`}
     >
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-zinc-800/80 text-zinc-300">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted/80 text-foreground">
             <Icon size={17} />
           </div>
           <div>
-            <h4 className="font-semibold text-white">{title}</h4>
-            {subtitle && <p className="text-xs text-zinc-500">{subtitle}</p>}
+            <h4 className="font-semibold text-foreground">{title}</h4>
+            {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
           </div>
         </div>
         {action}
@@ -125,14 +125,14 @@ function AlertBanner({ metrics }: { metrics: DashboardMetrics }) {
 
   return (
     <div className="flex items-start gap-3 rounded-2xl border border-amber-500/30 bg-linear-to-r from-amber-500/10 to-transparent p-4">
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-500/15 text-amber-400">
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-500/15 text-amber-600 dark:text-amber-400">
         <AlertTriangle size={18} />
       </div>
       <div>
-        <p className="text-sm font-semibold text-amber-200">
+        <p className="text-sm font-semibold text-amber-700 dark:text-amber-200">
           Atenção operacional
         </p>
-        <p className="mt-1 text-sm text-amber-100/80">{messages.join(' · ')}</p>
+        <p className="mt-1 text-sm text-amber-700/80 dark:text-amber-100/80">{messages.join(' · ')}</p>
       </div>
     </div>
   )
@@ -169,7 +169,7 @@ export function DashboardPage({
 
   if (loading) {
     return (
-      <div className="flex min-h-64 items-center justify-center rounded-2xl border border-zinc-800 bg-zinc-900 text-sm text-zinc-400">
+      <div className="flex min-h-64 items-center justify-center rounded-2xl border border-border bg-card text-sm text-muted-foreground">
         Carregando painel...
       </div>
     )
@@ -177,20 +177,20 @@ export function DashboardPage({
 
   return (
     <>
-      <section className="relative overflow-hidden rounded-3xl border border-zinc-800/80 bg-linear-to-br from-zinc-900 via-zinc-900/80 to-zinc-950 p-7">
+      <section className="relative overflow-hidden rounded-3xl border border-border/80 bg-linear-to-br from-card via-card/80 to-background p-7">
         <div className="pointer-events-none absolute -right-20 -top-24 h-72 w-72 rounded-full bg-red-600/10 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-32 left-10 h-72 w-72 rounded-full bg-sky-600/5 blur-3xl" />
 
         <div className="relative flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <span className="inline-flex items-center gap-2 rounded-full border border-zinc-700/80 bg-zinc-950/60 px-3 py-1 text-xs font-medium text-zinc-400">
-              <Activity size={13} className="text-red-400" />
+            <span className="inline-flex items-center gap-2 rounded-full border border-border/80 bg-background/60 px-3 py-1 text-xs font-medium text-muted-foreground">
+              <Activity size={13} className="text-red-600 dark:text-red-400" />
               Visão Geral Operacional
             </span>
-            <h3 className="mt-4 text-3xl font-bold tracking-tight text-white sm:text-4xl">
+            <h3 className="mt-4 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
               Painel de Controle
             </h3>
-            <p className="mt-2 max-w-2xl text-sm text-zinc-400">
+            <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
               Dados em tempo real, decisões inteligentes e acompanhamento de SLA
               de triagem ({SLA_TRIAGE_HOURS}h).
             </p>
@@ -200,7 +200,7 @@ export function DashboardPage({
             <button
               type="button"
               onClick={() => exportRecentTicketsCsv(metrics.recentTickets)}
-              className="inline-flex items-center gap-2 rounded-xl border border-zinc-700 bg-zinc-950/60 px-4 py-2.5 text-sm font-medium text-zinc-200 transition hover:bg-zinc-800"
+              className="inline-flex items-center gap-2 rounded-xl border border-border bg-background/60 px-4 py-2.5 text-sm font-medium text-foreground transition hover:bg-accent"
             >
               <Download size={16} />
               Exportar
@@ -308,7 +308,7 @@ export function DashboardPage({
             <button
               type="button"
               onClick={onGoToTickets}
-              className="inline-flex items-center gap-1 text-sm font-medium text-red-400 transition hover:text-red-300"
+              className="inline-flex items-center gap-1 text-sm font-medium text-red-600 dark:text-red-400 transition hover:text-red-700 dark:hover:text-red-300"
             >
               Ver todos
               <ChevronRight size={16} />
@@ -316,13 +316,13 @@ export function DashboardPage({
           }
         >
           {metrics.recentTickets.length === 0 ? (
-            <p className="text-sm text-zinc-500">
+            <p className="text-sm text-muted-foreground">
               Ainda não há chamados para exibir.
             </p>
           ) : (
             <div className="-mx-6 overflow-x-auto">
               <table className="min-w-full text-left text-sm">
-                <thead className="border-y border-zinc-800 bg-zinc-950/40 text-xs uppercase tracking-wide text-zinc-500">
+                <thead className="border-y border-border bg-background/40 text-xs uppercase tracking-wide text-muted-foreground">
                   <tr>
                     <th className="px-6 py-3 font-medium">OS</th>
                     <th className="px-4 py-3 font-medium">Equipamento</th>
@@ -333,22 +333,22 @@ export function DashboardPage({
                     <th className="px-6 py-3 font-medium">Responsável</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-zinc-800/70">
+                <tbody className="divide-y divide-border/70">
                   {metrics.recentTickets.map((row) => (
                     <tr
                       key={row.id}
-                      className="transition hover:bg-zinc-950/50"
+                      className="transition hover:bg-accent"
                     >
-                      <td className="px-6 py-3.5 font-semibold text-zinc-100">
+                      <td className="px-6 py-3.5 font-semibold text-foreground">
                         #{row.ticketNumber}
                       </td>
-                      <td className="px-4 py-3.5 text-zinc-300">
+                      <td className="px-4 py-3.5 text-foreground">
                         {row.equipmentLabel}
                       </td>
-                      <td className="px-4 py-3.5 text-zinc-300">
+                      <td className="px-4 py-3.5 text-foreground">
                         {row.siteLabel}
                       </td>
-                      <td className="px-4 py-3.5 text-zinc-400">
+                      <td className="px-4 py-3.5 text-muted-foreground">
                         {formatDateTime(row.openedAt)}
                       </td>
                       <td className="px-4 py-3.5">
@@ -357,7 +357,7 @@ export function DashboardPage({
                       <td className="px-4 py-3.5">
                         <StatusBadge status={row.status} />
                       </td>
-                      <td className="px-6 py-3.5 text-zinc-300">
+                      <td className="px-6 py-3.5 text-foreground">
                         {row.responsibleName}
                       </td>
                     </tr>

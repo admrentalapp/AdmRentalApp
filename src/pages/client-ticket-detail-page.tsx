@@ -59,14 +59,14 @@ export function ClientTicketDetailPage({
       <button
         type="button"
         onClick={onBack}
-        className="flex items-center gap-2 text-sm font-medium text-zinc-400 hover:text-white"
+        className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground"
       >
         <ArrowLeft size={16} />
         Voltar para meus chamados
       </button>
 
-      <section className="mt-5 rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
-        <p className="text-sm text-zinc-500">
+      <section className="mt-5 rounded-2xl border border-border bg-card p-6">
+        <p className="text-sm text-muted-foreground">
           OS #{ticket.ticket_number} · {companyName}
         </p>
         <h3 className="mt-1 text-2xl font-bold">{ticket.title}</h3>
@@ -74,9 +74,9 @@ export function ClientTicketDetailPage({
           <StatusBadge status={ticket.status} />
           <PriorityBadge priority={ticket.priority} />
         </div>
-        <div className="mt-6 rounded-xl border border-zinc-800 bg-zinc-950 p-4">
-          <p className="text-sm font-medium text-zinc-300">Descrição</p>
-          <p className="mt-2 text-sm leading-relaxed text-zinc-400">
+        <div className="mt-6 rounded-xl border border-border bg-background p-4">
+          <p className="text-sm font-medium text-foreground">Descrição</p>
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
             {ticket.description}
           </p>
         </div>
@@ -87,7 +87,7 @@ export function ClientTicketDetailPage({
           equipmentLabel={equipmentLabel}
         />
 
-        <p className="mt-4 text-xs text-zinc-500">
+        <p className="mt-4 text-xs text-muted-foreground">
           Aberto em {formatDateTime(ticket.created_at)}
           {ticket.updated_at !== ticket.created_at &&
             ` · Atualizado em ${formatDateTime(ticket.updated_at)}`}

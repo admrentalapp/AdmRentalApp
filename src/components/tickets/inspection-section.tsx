@@ -98,9 +98,9 @@ export function InspectionSection({
 
   if (loading) {
     return (
-      <section className="mt-6 rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
+      <section className="mt-6 rounded-2xl border border-border bg-card p-6">
         <h4 className="font-bold">Laudo de inspeção</h4>
-        <p className="mt-6 text-sm text-zinc-400">Carregando laudo...</p>
+        <p className="mt-6 text-sm text-muted-foreground">Carregando laudo...</p>
       </section>
     )
   }
@@ -110,15 +110,15 @@ export function InspectionSection({
   }
 
   return (
-    <section className="mt-6 rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
+    <section className="mt-6 rounded-2xl border border-border bg-card p-6">
       <h4 className="font-bold">Laudo de inspeção</h4>
       {mode === 'form' ? (
-        <p className="mt-1 text-sm text-zinc-500">
+        <p className="mt-1 text-sm text-muted-foreground">
           Registre constatações, causa provável e responsabilidade. O gestor
           aplicará o próximo status com base no laudo.
         </p>
       ) : (
-        <p className="mt-1 text-sm text-zinc-500">
+        <p className="mt-1 text-sm text-muted-foreground">
           Resultado da inspeção técnica registrada pela manutenção.
         </p>
       )}
@@ -127,20 +127,20 @@ export function InspectionSection({
         <div
           className={`mt-4 rounded-xl border p-4 ${
             inspection.responsibility === 'adm'
-              ? 'border-emerald-900/60 bg-emerald-950/30'
-              : 'border-amber-900/60 bg-amber-950/30'
+              ? 'border-emerald-300 bg-emerald-100 dark:border-emerald-900/60 dark:bg-emerald-950/30'
+              : 'border-amber-300 bg-amber-100 dark:border-amber-900/60 dark:bg-amber-950/30'
           }`}
         >
-          <p className="text-sm font-medium text-zinc-100">
+          <p className="text-sm font-medium text-foreground">
             {inspectionResponsibilityLabel(inspection.responsibility)}
           </p>
-          <p className="mt-1 text-sm text-zinc-300">
+          <p className="mt-1 text-sm text-foreground">
             Status sugerido:{' '}
-            <span className="font-semibold text-white">
+            <span className="font-semibold text-foreground">
               {statusLabel(recommendedStatus)}
             </span>
             {currentStatus && currentStatus !== recommendedStatus && (
-              <span className="text-zinc-400">
+              <span className="text-muted-foreground">
                 {' '}
                 (atual: {statusLabel(currentStatus)})
               </span>
@@ -152,7 +152,7 @@ export function InspectionSection({
               <button
                 type="button"
                 onClick={() => onApplyRecommendedStatus(recommendedStatus)}
-                className="mt-3 rounded-lg border border-zinc-600 px-4 py-2 text-sm font-medium text-zinc-100 hover:bg-zinc-800"
+                className="mt-3 rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-accent"
               >
                 Usar status sugerido na triagem
               </button>
@@ -165,7 +165,7 @@ export function InspectionSection({
           <div>
             <label
               htmlFor="inspectedAt"
-              className="mb-2 block text-sm font-medium text-zinc-200"
+              className="mb-2 block text-sm font-medium text-foreground"
             >
               Data e hora da inspeção
             </label>
@@ -180,14 +180,14 @@ export function InspectionSection({
                   inspectedAt: event.target.value,
                 }))
               }
-              className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-3 text-white outline-none focus:border-red-500"
+              className="w-full rounded-lg border border-border bg-background px-4 py-3 text-foreground outline-none focus:border-red-500"
             />
           </div>
 
           <div>
             <label
               htmlFor="findings"
-              className="mb-2 block text-sm font-medium text-zinc-200"
+              className="mb-2 block text-sm font-medium text-foreground"
             >
               Constatações
             </label>
@@ -204,7 +204,7 @@ export function InspectionSection({
                 }))
               }
               placeholder="Descreva o que foi observado no equipamento e no local..."
-              className="w-full resize-none rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-3 text-white outline-none placeholder:text-zinc-600 focus:border-red-500"
+              className="w-full resize-none rounded-lg border border-border bg-background px-4 py-3 text-foreground outline-none placeholder:text-muted-foreground focus:border-red-500"
             />
           </div>
 
@@ -212,7 +212,7 @@ export function InspectionSection({
             <div>
               <label
                 htmlFor="probableCause"
-                className="mb-2 block text-sm font-medium text-zinc-200"
+                className="mb-2 block text-sm font-medium text-foreground"
               >
                 Causa provável
               </label>
@@ -225,7 +225,7 @@ export function InspectionSection({
                     probableCause: event.target.value as InspectionCause,
                   }))
                 }
-                className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-3 text-white outline-none focus:border-red-500"
+                className="w-full rounded-lg border border-border bg-background px-4 py-3 text-foreground outline-none focus:border-red-500"
               >
                 {INSPECTION_CAUSES.map((cause) => (
                   <option key={cause} value={cause}>
@@ -238,7 +238,7 @@ export function InspectionSection({
             <div>
               <label
                 htmlFor="responsibility"
-                className="mb-2 block text-sm font-medium text-zinc-200"
+                className="mb-2 block text-sm font-medium text-foreground"
               >
                 Responsabilidade
               </label>
@@ -251,12 +251,12 @@ export function InspectionSection({
                     responsibility: event.target.value as InspectionResponsibility,
                   }))
                 }
-                className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-3 text-white outline-none focus:border-red-500"
+                className="w-full rounded-lg border border-border bg-background px-4 py-3 text-foreground outline-none focus:border-red-500"
               >
                 <option value="adm">Responsabilidade ADM</option>
                 <option value="cliente">Responsabilidade do cliente</option>
               </select>
-              <p className="mt-2 text-xs text-zinc-500">
+              <p className="mt-2 text-xs text-muted-foreground">
                 ADM → sugerido Em execução · Cliente → sugerido Aguardando
                 aprovação
               </p>
@@ -266,10 +266,10 @@ export function InspectionSection({
           <div>
             <label
               htmlFor="causeNotes"
-              className="mb-2 block text-sm font-medium text-zinc-200"
+              className="mb-2 block text-sm font-medium text-foreground"
             >
               Detalhes da causa{' '}
-              <span className="font-normal text-zinc-500">(opcional)</span>
+              <span className="font-normal text-muted-foreground">(opcional)</span>
             </label>
             <input
               id="causeNotes"
@@ -282,14 +282,14 @@ export function InspectionSection({
                 }))
               }
               placeholder="Complemento sobre a causa identificada"
-              className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-3 text-white outline-none placeholder:text-zinc-600 focus:border-red-500"
+              className="w-full rounded-lg border border-border bg-background px-4 py-3 text-foreground outline-none placeholder:text-muted-foreground focus:border-red-500"
             />
           </div>
 
           <div>
             <label
               htmlFor="recommendation"
-              className="mb-2 block text-sm font-medium text-zinc-200"
+              className="mb-2 block text-sm font-medium text-foreground"
             >
               Recomendações
             </label>
@@ -306,18 +306,18 @@ export function InspectionSection({
                 }))
               }
               placeholder="Peças, serviços ou próximos passos recomendados..."
-              className="w-full resize-none rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-3 text-white outline-none placeholder:text-zinc-600 focus:border-red-500"
+              className="w-full resize-none rounded-lg border border-border bg-background px-4 py-3 text-foreground outline-none placeholder:text-muted-foreground focus:border-red-500"
             />
           </div>
 
           {saveError && (
-            <p className="rounded-lg border border-red-900 bg-red-950/40 p-3 text-sm text-red-200">
+            <p className="rounded-lg border border-red-300 bg-red-100 dark:border-red-900 dark:bg-red-950/40 p-3 text-sm text-red-700 dark:text-red-200">
               {saveError}
             </p>
           )}
 
           {saveSuccess && (
-            <p className="rounded-lg border border-emerald-900 bg-emerald-950/40 p-3 text-sm text-emerald-200">
+            <p className="rounded-lg border border-emerald-300 bg-emerald-100 dark:border-emerald-900 dark:bg-emerald-950/40 p-3 text-sm text-emerald-800 dark:text-emerald-200">
               {saveSuccess}
             </p>
           )}
@@ -336,49 +336,49 @@ export function InspectionSection({
         </form>
       ) : (
         inspection && (
-          <div className="mt-6 space-y-4 rounded-xl border border-zinc-800 bg-zinc-950 p-4">
+          <div className="mt-6 space-y-4 rounded-xl border border-border bg-background p-4">
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <p className="text-xs uppercase tracking-wide text-zinc-500">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">
                   Inspeção em
                 </p>
-                <p className="mt-1 text-sm text-zinc-200">
+                <p className="mt-1 text-sm text-foreground">
                   {formatDateTime(inspection.inspected_at)}
                 </p>
               </div>
               {inspectorName && (
                 <div>
-                  <p className="text-xs uppercase tracking-wide text-zinc-500">
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground">
                     Inspetor
                   </p>
-                  <p className="mt-1 text-sm text-zinc-200">{inspectorName}</p>
+                  <p className="mt-1 text-sm text-foreground">{inspectorName}</p>
                 </div>
               )}
             </div>
 
             <div>
-              <p className="text-xs uppercase tracking-wide text-zinc-500">
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">
                 Constatações
               </p>
-              <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-zinc-300">
+              <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-foreground">
                 {inspection.findings}
               </p>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <p className="text-xs uppercase tracking-wide text-zinc-500">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">
                   Causa provável
                 </p>
-                <p className="mt-1 text-sm text-zinc-200">
+                <p className="mt-1 text-sm text-foreground">
                   {inspectionCauseLabel(inspection.probable_cause)}
                 </p>
               </div>
               <div>
-                <p className="text-xs uppercase tracking-wide text-zinc-500">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">
                   Responsabilidade
                 </p>
-                <p className="mt-1 text-sm text-zinc-200">
+                <p className="mt-1 text-sm text-foreground">
                   {inspectionResponsibilityLabel(inspection.responsibility)}
                 </p>
               </div>
@@ -386,25 +386,25 @@ export function InspectionSection({
 
             {inspection.cause_notes && (
               <div>
-                <p className="text-xs uppercase tracking-wide text-zinc-500">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">
                   Detalhes da causa
                 </p>
-                <p className="mt-1 text-sm text-zinc-300">
+                <p className="mt-1 text-sm text-foreground">
                   {inspection.cause_notes}
                 </p>
               </div>
             )}
 
             <div>
-              <p className="text-xs uppercase tracking-wide text-zinc-500">
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">
                 Recomendações
               </p>
-              <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-zinc-300">
+              <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-foreground">
                 {inspection.recommendation}
               </p>
             </div>
 
-            <p className="text-xs text-zinc-500">
+            <p className="text-xs text-muted-foreground">
               Atualizado em {formatDateTime(inspection.updated_at)}
             </p>
           </div>
