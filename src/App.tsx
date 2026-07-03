@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { Bell, ClipboardList, LogOut, Menu, Plus, X } from 'lucide-react'
 import { AppLogo } from '@/components/shared/app-logo'
+import { LoginBackground } from '@/components/auth/login-background'
 import { ClientNewTicketModal } from '@/components/tickets/client-new-ticket-modal'
 import type { InspectionFormValues } from '@/components/tickets/inspection-section'
 import { PriorityBadge, StatusBadge } from '@/components/tickets/badges'
@@ -2004,71 +2005,86 @@ export default function App() {
 
   if (!profile) {
     return (
-      <main className="flex min-h-svh items-center justify-center bg-zinc-950 p-5 text-white">
-        <section className="w-full max-w-md rounded-2xl border border-zinc-800 bg-zinc-900 p-7 shadow-2xl">
-          <div className="mb-8">
-            <AppLogo className="mb-4 h-16 w-auto max-w-full object-contain" />
+      <main className="relative flex min-h-svh items-center justify-center overflow-hidden bg-zinc-950 p-5 text-white">
+        <LoginBackground />
 
-            <h1 className="text-2xl font-bold">ADM Manutenção</h1>
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(220,38,38,0.12),transparent_55%)]" />
+        <div className="pointer-events-none absolute inset-0 bg-linear-to-b from-transparent via-zinc-950/40 to-zinc-950" />
 
+        <section className="relative z-10 w-full max-w-md">
+          <div className="flex flex-col items-center text-center">
+            <div className="relative">
+              <div className="pointer-events-none absolute -inset-6 rounded-full bg-red-600/20 blur-2xl" />
+              <AppLogo className="relative h-20 w-auto max-w-[220px] object-contain" />
+            </div>
+
+            <h1 className="mt-6 text-2xl font-bold tracking-tight">
+              ADM Manutenção
+            </h1>
             <p className="mt-2 text-sm text-zinc-400">
-              Acesse sua área de manutenção.
+              Plataforma profissional de gestão de chamados
             </p>
           </div>
 
-          <form className="space-y-5" onSubmit={handleLogin}>
-            <div>
-              <label
-                htmlFor="email"
-                className="mb-2 block text-sm font-medium text-zinc-200"
+          <div className="mt-8 rounded-2xl border border-white/10 bg-white/5 p-7 shadow-2xl shadow-black/40 backdrop-blur-xl">
+            <form className="space-y-5" onSubmit={handleLogin}>
+              <div>
+                <label
+                  htmlFor="email"
+                  className="mb-2 block text-sm font-medium text-zinc-200"
+                >
+                  E-mail
+                </label>
+
+                <input
+                  id="email"
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  placeholder="voce@empresa.com"
+                  className="w-full rounded-lg border border-white/10 bg-zinc-950/60 px-4 py-3 text-white outline-none transition placeholder:text-zinc-600 focus:border-red-500 focus:ring-2 focus:ring-red-500/30"
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="password"
+                  className="mb-2 block text-sm font-medium text-zinc-200"
+                >
+                  Senha
+                </label>
+
+                <input
+                  id="password"
+                  type="password"
+                  required
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  placeholder="Digite sua senha"
+                  className="w-full rounded-lg border border-white/10 bg-zinc-950/60 px-4 py-3 text-white outline-none transition placeholder:text-zinc-600 focus:border-red-500 focus:ring-2 focus:ring-red-500/30"
+                />
+              </div>
+
+              {message && (
+                <p className="rounded-lg border border-red-900 bg-red-950/40 p-3 text-sm text-red-200">
+                  {message}
+                </p>
+              )}
+
+              <button
+                type="submit"
+                disabled={loginLoading}
+                className="w-full rounded-lg bg-red-600 px-4 py-3 font-semibold text-white shadow-lg shadow-red-900/40 transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                E-mail
-              </label>
+                {loginLoading ? 'Entrando...' : 'Entrar'}
+              </button>
+            </form>
+          </div>
 
-              <input
-                id="email"
-                type="email"
-                required
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                placeholder="voce@empresa.com"
-                className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-3 text-white outline-none placeholder:text-zinc-600 focus:border-red-500"
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="password"
-                className="mb-2 block text-sm font-medium text-zinc-200"
-              >
-                Senha
-              </label>
-
-              <input
-                id="password"
-                type="password"
-                required
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                placeholder="Digite sua senha"
-                className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-3 text-white outline-none placeholder:text-zinc-600 focus:border-red-500"
-              />
-            </div>
-
-            {message && (
-              <p className="rounded-lg border border-red-900 bg-red-950/40 p-3 text-sm text-red-200">
-                {message}
-              </p>
-            )}
-
-            <button
-              type="submit"
-              disabled={loginLoading}
-              className="w-full rounded-lg bg-red-600 px-4 py-3 font-semibold text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {loginLoading ? 'Entrando...' : 'Entrar'}
-            </button>
-          </form>
+          <p className="mt-6 text-center text-xs text-zinc-600">
+            ADM Rental Service · Acesso restrito
+          </p>
         </section>
       </main>
     )
