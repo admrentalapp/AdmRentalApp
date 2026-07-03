@@ -7,7 +7,6 @@ import {
   Download,
   Gauge,
   PieChart,
-  Plus,
   Timer,
   TrendingUp,
   Wrench,
@@ -147,7 +146,6 @@ export function DashboardPage({
   siteLabels,
   loading,
   onGoToTickets,
-  onCreateTicket,
 }: {
   tickets: Ticket[]
   events: TicketEvent[]
@@ -156,7 +154,6 @@ export function DashboardPage({
   siteLabels: Map<string, string>
   loading: boolean
   onGoToTickets: () => void
-  onCreateTicket: () => void
 }) {
   const profileNames = new Map(
     profiles.map((profile) => [profile.id, profile.full_name || 'Sem nome']),
@@ -207,14 +204,6 @@ export function DashboardPage({
             >
               <Download size={16} />
               Exportar
-            </button>
-            <button
-              type="button"
-              onClick={onCreateTicket}
-              className="inline-flex items-center gap-2 rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-red-900/30 transition hover:bg-red-700"
-            >
-              <Plus size={16} />
-              Novo chamado
             </button>
           </div>
         </div>

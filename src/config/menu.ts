@@ -1,7 +1,10 @@
 import {
   Building2,
+  CheckSquare,
   ClipboardList,
+  FileBarChart,
   LayoutDashboard,
+  Package,
   Users,
   Wrench,
 } from 'lucide-react'
@@ -13,4 +16,7 @@ export const managerMenuItems: MenuItem[] = [
   { label: 'Clientes', page: 'clientes', icon: Building2 },
   { label: 'Usuários', page: 'tecnicos', icon: Users },
   { label: 'Equipamentos', page: 'equipamentos', icon: Wrench },
+  { label: 'Estoque', page: 'estoque', icon: Package },
+  { label: 'Checklist', page: 'checklist', icon: CheckSquare },
+  { label: 'Relatórios', page: 'relatorios', icon: FileBarChart },
 ]

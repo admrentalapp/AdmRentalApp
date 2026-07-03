@@ -22,11 +22,30 @@ import {
   uploadTicketAttachment,
 } from '@/features/tickets/api'
 import {
+  fetchTicketApproval,
+  parseTicketApproval,
+  respondTicketApproval,
+} from '@/features/tickets/approvals-api'
+import {
   fetchTicketInspection,
   parseTicketInspection,
   saveTicketInspection,
 } from '@/features/tickets/inspections-api'
 import { TICKET_SELECT_COLUMNS } from '@/features/tickets/constants'
+import {
+  fetchChecklistRuns,
+  fetchChecklistTemplates,
+  parseRuns,
+  parseTemplates,
+  startChecklistRun,
+} from '@/features/checklists/api'
+import {
+  createPart,
+  fetchParts,
+  parseParts,
+  registerPartMovement,
+} from '@/features/inventory/api'
+import { createManagedUser } from '@/features/users/api'
 import {
   fetchDashboardEvents,
   fetchDashboardLookups,
@@ -37,7 +56,10 @@ import { supabase } from '@/lib/supabase'
 import { ClientTicketDetailPage } from '@/pages/client-ticket-detail-page'
 import { ClientsPage } from '@/pages/clients-page'
 import { DashboardPage } from '@/pages/dashboard-page'
+import { ChecklistPage } from '@/pages/checklist-page'
 import { EquipmentPage } from '@/pages/equipment-page'
+import { InventoryPage } from '@/pages/inventory-page'
+import { ReportsPage } from '@/pages/reports-page'
 import { SitesPage } from '@/pages/sites-page'
 import { TechniciansPage } from '@/pages/technicians-page'
 import { TechnicianTicketDetailPage } from '@/pages/technician-ticket-detail-page'
@@ -46,13 +68,17 @@ import { TicketsPage } from '@/pages/tickets-page'
 import type {
   AppPage,
   Attachment,
+  ChecklistRun,
+  ChecklistTemplate,
   Client,
   Equipment,
   EquipmentWithAllocation,
   ManagedProfile,
+  Part,
   Profile,
   Site,
   Ticket,
+  TicketApproval,
   TicketEvent,
   TicketInspection,
   TicketPriority,
@@ -186,6 +212,11 @@ export default function App() {
   const [inspectionSaveError, setInspectionSaveError] = useState('')
   const [inspectionSaveSuccess, setInspectionSaveSuccess] = useState('')
 
+  const [ticketApproval, setTicketApproval] = useState<TicketApproval | null>(null)
+  const [ticketApprovalLoading, setTicketApprovalLoading] = useState(false)
+  const [approvalSubmitLoading, setApprovalSubmitLoading] = useState(false)
+  const [approvalSubmitError, setApprovalSubmitError] = useState('')
+
   const [dashboardEvents, setDashboardEvents] = useState<TicketEvent[]>([])
   const [dashboardSiteLabels, setDashboardSiteLabels] = useState(
     () => new Map<string, string>(),
@@ -194,6 +225,47 @@ export default function App() {
     () => new Map<string, string>(),
   )
   const [dashboardLoading, setDashboardLoading] = useState(false)
+
+  const [parts, setParts] = useState<Part[]>([])
+  const [partsLoading, setPartsLoading] = useState(false)
+  const [partsError, setPartsError] = useState('')
+  const [newPartOpen, setNewPartOpen] = useState(false)
+  const [newPartSku, setNewPartSku] = useState('')
+  const [newPartName, setNewPartName] = useState('')
+  const [newPartDescription, setNewPartDescription] = useState('')
+  const [newPartMinStock, setNewPartMinStock] = useState('0')
+  const [newPartCurrentStock, setNewPartCurrentStock] = useState('0')
+  const [newPartLoading, setNewPartLoading] = useState(false)
+  const [newPartMessage, setNewPartMessage] = useState('')
+  const [movementPartId, setMovementPartId] = useState('')
+  const [movementType, setMovementType] = useState<'entrada' | 'saida' | 'ajuste'>(
+    'entrada',
+  )
+  const [movementQty, setMovementQty] = useState('1')
+  const [movementNotes, setMovementNotes] = useState('')
+  const [movementLoading, setMovementLoading] = useState(false)
+  const [movementMessage, setMovementMessage] = useState('')
+
+  const [checklistTemplates, setChecklistTemplates] = useState<
+    ChecklistTemplate[]
+  >([])
+  const [checklistRuns, setChecklistRuns] = useState<ChecklistRun[]>([])
+  const [checklistLoading, setChecklistLoading] = useState(false)
+  const [checklistError, setChecklistError] = useState('')
+  const [checklistTemplateId, setChecklistTemplateId] = useState('')
+  const [checklistEquipmentId, setChecklistEquipmentId] = useState('')
+  const [checklistNotes, setChecklistNotes] = useState('')
+  const [checklistStartLoading, setChecklistStartLoading] = useState(false)
+  const [checklistStartMessage, setChecklistStartMessage] = useState('')
+
+  const [newUserOpen, setNewUserOpen] = useState(false)
+  const [newUserEmail, setNewUserEmail] = useState('')
+  const [newUserPassword, setNewUserPassword] = useState('')
+  const [newUserName, setNewUserName] = useState('')
+  const [newUserRole, setNewUserRole] = useState<UserRole>('cliente')
+  const [newUserClientId, setNewUserClientId] = useState('')
+  const [newUserLoading, setNewUserLoading] = useState(false)
+  const [newUserMessage, setNewUserMessage] = useState('')
 
   const loadClients = useCallback(async () => {
     setClientsLoading(true)
@@ -390,6 +462,21 @@ export default function App() {
     setTicketInspection(parseTicketInspection(data))
   }, [])
 
+  const loadTicketApproval = useCallback(async (ticketId: string) => {
+    setTicketApprovalLoading(true)
+
+    const { data, error } = await fetchTicketApproval(ticketId)
+
+    setTicketApprovalLoading(false)
+
+    if (error) {
+      setTicketApproval(null)
+      return
+    }
+
+    setTicketApproval(parseTicketApproval(data))
+  }, [])
+
   const loadDashboardData = useCallback(async (ticketList: Ticket[]) => {
     setDashboardLoading(true)
 
@@ -403,6 +490,41 @@ export default function App() {
     setDashboardSiteLabels(lookupsResult.siteLabels)
     setDashboardEquipmentLabels(lookupsResult.equipmentLabels)
     setDashboardLoading(false)
+  }, [])
+
+  const loadParts = useCallback(async () => {
+    setPartsLoading(true)
+    setPartsError('')
+    const { data, error } = await fetchParts()
+    setPartsLoading(false)
+    if (error) {
+      setParts([])
+      setPartsError(error.message || 'Não foi possível carregar o estoque.')
+      return
+    }
+    setParts(parseParts(data))
+  }, [])
+
+  const loadChecklistData = useCallback(async () => {
+    setChecklistLoading(true)
+    setChecklistError('')
+    const [templatesResult, runsResult] = await Promise.all([
+      fetchChecklistTemplates(),
+      fetchChecklistRuns(),
+    ])
+    setChecklistLoading(false)
+    if (templatesResult.error || runsResult.error) {
+      setChecklistTemplates([])
+      setChecklistRuns([])
+      setChecklistError(
+        templatesResult.error?.message ||
+          runsResult.error?.message ||
+          'Não foi possível carregar checklists.',
+      )
+      return
+    }
+    setChecklistTemplates(parseTemplates(templatesResult.data))
+    setChecklistRuns(parseRuns(runsResult.data))
   }, [])
 
   const loadTicketAttachments = useCallback(async (ticketId: string) => {
@@ -1069,11 +1191,14 @@ export default function App() {
     setTicketInspection(null)
     setInspectionSaveError('')
     setInspectionSaveSuccess('')
+    setTicketApproval(null)
+    setApprovalSubmitError('')
 
     const detailLookups: Promise<unknown>[] = [
       loadTicketEvents(ticket.id),
       loadTicketAttachments(ticket.id),
       loadTicketInspection(ticket.id),
+      loadTicketApproval(ticket.id),
     ]
 
     if (profile?.role !== 'cliente') {
@@ -1127,6 +1252,8 @@ export default function App() {
     setTicketInspection(null)
     setInspectionSaveError('')
     setInspectionSaveSuccess('')
+    setTicketApproval(null)
+    setApprovalSubmitError('')
   }
 
   async function handleUploadAttachment(file: File) {
@@ -1329,6 +1456,168 @@ export default function App() {
     await loadTicketEvents(viewingTicket.id)
   }
 
+  async function handleClientApproval(
+    decision: 'aprovado' | 'recusado',
+    notes: string,
+  ) {
+    if (!viewingTicket || !profile) return
+
+    setApprovalSubmitLoading(true)
+    setApprovalSubmitError('')
+
+    const { error } = await respondTicketApproval(
+      viewingTicket.id,
+      decision,
+      notes || null,
+    )
+
+    setApprovalSubmitLoading(false)
+
+    if (error) {
+      setApprovalSubmitError(
+        error.message ||
+          'Não foi possível registrar a aprovação. Execute supabase/ticket-approvals.sql.',
+      )
+      return
+    }
+
+    const newStatus = decision === 'aprovado' ? 'em_execucao' : 'triagem'
+    setViewingTicket({ ...viewingTicket, status: newStatus })
+    await Promise.all([
+      loadTicketApproval(viewingTicket.id),
+      loadTicketEvents(viewingTicket.id),
+    ])
+  }
+
+  async function handleCreateUser(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (!profile) return
+
+    if (newUserRole === 'cliente' && !newUserClientId) {
+      setNewUserMessage('Selecione a empresa para usuários cliente.')
+      return
+    }
+
+    setNewUserLoading(true)
+    setNewUserMessage('')
+
+    const { data, error } = await createManagedUser({
+      email: newUserEmail.trim(),
+      password: newUserPassword,
+      fullName: newUserName.trim(),
+      role: newUserRole,
+      clientId: newUserRole === 'cliente' ? newUserClientId : null,
+    })
+
+    setNewUserLoading(false)
+
+    if (error) {
+      setNewUserMessage(
+        error.message ||
+          'Falha ao criar usuário. Verifique se a Edge Function create-user está publicada no Supabase.',
+      )
+      return
+    }
+
+    const response = data as { error?: string } | null
+    if (response?.error) {
+      setNewUserMessage(response.error)
+      return
+    }
+
+    setNewUserOpen(false)
+    setNewUserEmail('')
+    setNewUserPassword('')
+    setNewUserName('')
+    setNewUserRole('cliente')
+    setNewUserClientId('')
+    setNewUserMessage('')
+    await loadProfiles()
+  }
+
+  async function handleCreatePart(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setNewPartLoading(true)
+    setNewPartMessage('')
+
+    const { error } = await createPart({
+      sku: newPartSku.trim(),
+      name: newPartName.trim(),
+      description: newPartDescription.trim() || null,
+      minStock: Number(newPartMinStock) || 0,
+      currentStock: Number(newPartCurrentStock) || 0,
+    })
+
+    setNewPartLoading(false)
+
+    if (error) {
+      setNewPartMessage(error.message || 'Não foi possível cadastrar a peça.')
+      return
+    }
+
+    setNewPartOpen(false)
+    setNewPartSku('')
+    setNewPartName('')
+    setNewPartDescription('')
+    setNewPartMinStock('0')
+    setNewPartCurrentStock('0')
+    await loadParts()
+  }
+
+  async function handleRegisterMovement(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setMovementLoading(true)
+    setMovementMessage('')
+
+    const { error } = await registerPartMovement({
+      partId: movementPartId,
+      movementType,
+      quantity: Number(movementQty),
+      notes: movementNotes.trim() || null,
+    })
+
+    setMovementLoading(false)
+
+    if (error) {
+      setMovementMessage(error.message || 'Não foi possível registrar movimentação.')
+      return
+    }
+
+    setMovementMessage('')
+    setMovementNotes('')
+    await loadParts()
+  }
+
+  async function handleStartChecklist(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (!profile) return
+
+    setChecklistStartLoading(true)
+    setChecklistStartMessage('')
+
+    const { error } = await startChecklistRun({
+      templateId: checklistTemplateId,
+      equipmentId: checklistEquipmentId || null,
+      performedBy: profile.id,
+      notes: checklistNotes.trim() || null,
+    })
+
+    setChecklistStartLoading(false)
+
+    if (error) {
+      setChecklistStartMessage(
+        error.message ||
+          'Não foi possível iniciar o checklist. Execute supabase/checklists.sql.',
+      )
+      return
+    }
+
+    setChecklistTemplateId('')
+    setChecklistEquipmentId('')
+    setChecklistNotes('')
+    await loadChecklistData()
+  }
+
   function changePage(page: AppPage) {
     setActivePage(page)
     setMenuOpen(false)
@@ -1358,16 +1647,20 @@ export default function App() {
       void loadProfiles()
       void loadTickets()
     }
-  }
 
-  function goToNewTicketFromDashboard() {
-    setActivePage('chamados')
-    setMenuOpen(false)
-    resetTicketsView()
-    openNewTicketModal()
-    void loadClients()
-    void loadProfiles()
-    void loadTickets()
+    if (page === 'estoque') {
+      void loadParts()
+    }
+
+    if (page === 'checklist') {
+      void loadFleet()
+      void loadChecklistData()
+    }
+
+    if (page === 'relatorios') {
+      void loadTickets()
+      void loadParts()
+    }
   }
 
   function renderTechnicianArea() {
@@ -1542,6 +1835,11 @@ export default function App() {
               onUpload={handleUploadAttachment}
               inspection={ticketInspection}
               inspectionLoading={ticketInspectionLoading}
+              approval={ticketApproval}
+              approvalLoading={ticketApprovalLoading}
+              approvalSubmitLoading={approvalSubmitLoading}
+              approvalSubmitError={approvalSubmitError}
+              onRespondApproval={handleClientApproval}
               onBack={backToTicketsList}
             />
           </div>
@@ -1903,7 +2201,6 @@ export default function App() {
               siteLabels={dashboardSiteLabels}
               loading={ticketsLoading || dashboardLoading}
               onGoToTickets={() => changePage('chamados')}
-              onCreateTicket={goToNewTicketFromDashboard}
             />
           )}
 
@@ -1967,6 +2264,8 @@ export default function App() {
                 editMessage={editTicketMessage}
                 inspection={ticketInspection}
                 inspectionLoading={ticketInspectionLoading}
+                approval={ticketApproval}
+                approvalLoading={ticketApprovalLoading}
                 onBack={backToTicketsList}
                 onEditStatusChange={setEditTicketStatus}
                 onEditPriorityChange={setEditTicketPriority}
@@ -2026,7 +2325,89 @@ export default function App() {
               onEditRoleChange={setEditRole}
               onEditClientChange={setEditClientId}
               onSaveProfile={handleSaveProfile}
+              newUserOpen={newUserOpen}
+              newUserEmail={newUserEmail}
+              newUserPassword={newUserPassword}
+              newUserName={newUserName}
+              newUserRole={newUserRole}
+              newUserClientId={newUserClientId}
+              newUserLoading={newUserLoading}
+              newUserMessage={newUserMessage}
+              onOpenNewUser={() => {
+                setNewUserOpen(true)
+                setNewUserMessage('')
+              }}
+              onCloseNewUser={() => setNewUserOpen(false)}
+              onNewUserEmailChange={setNewUserEmail}
+              onNewUserPasswordChange={setNewUserPassword}
+              onNewUserNameChange={setNewUserName}
+              onNewUserRoleChange={setNewUserRole}
+              onNewUserClientChange={setNewUserClientId}
+              onCreateUser={handleCreateUser}
             />
+          )}
+
+          {activePage === 'estoque' && (
+            <InventoryPage
+              parts={parts}
+              loading={partsLoading}
+              error={partsError}
+              modalOpen={newPartOpen}
+              newSku={newPartSku}
+              newName={newPartName}
+              newDescription={newPartDescription}
+              newMinStock={newPartMinStock}
+              newCurrentStock={newPartCurrentStock}
+              newLoading={newPartLoading}
+              newMessage={newPartMessage}
+              movementPartId={movementPartId}
+              movementType={movementType}
+              movementQty={movementQty}
+              movementNotes={movementNotes}
+              movementLoading={movementLoading}
+              movementMessage={movementMessage}
+              onOpenModal={() => {
+                setNewPartOpen(true)
+                setNewPartMessage('')
+              }}
+              onCloseModal={() => setNewPartOpen(false)}
+              onNewSkuChange={setNewPartSku}
+              onNewNameChange={setNewPartName}
+              onNewDescriptionChange={setNewPartDescription}
+              onNewMinStockChange={setNewPartMinStock}
+              onNewCurrentStockChange={setNewPartCurrentStock}
+              onCreatePart={handleCreatePart}
+              onMovementPartChange={setMovementPartId}
+              onMovementTypeChange={setMovementType}
+              onMovementQtyChange={setMovementQty}
+              onMovementNotesChange={setMovementNotes}
+              onRegisterMovement={handleRegisterMovement}
+              onReload={() => void loadParts()}
+            />
+          )}
+
+          {activePage === 'checklist' && (
+            <ChecklistPage
+              templates={checklistTemplates}
+              runs={checklistRuns}
+              equipment={equipmentFleet}
+              loading={checklistLoading}
+              error={checklistError}
+              selectedTemplateId={checklistTemplateId}
+              selectedEquipmentId={checklistEquipmentId}
+              notes={checklistNotes}
+              startLoading={checklistStartLoading}
+              startMessage={checklistStartMessage}
+              onTemplateChange={setChecklistTemplateId}
+              onEquipmentChange={setChecklistEquipmentId}
+              onNotesChange={setChecklistNotes}
+              onStartRun={handleStartChecklist}
+              onReload={() => void loadChecklistData()}
+            />
+          )}
+
+          {activePage === 'relatorios' && (
+            <ReportsPage tickets={tickets} parts={parts} />
           )}
 
           {activePage === 'equipamentos' && (

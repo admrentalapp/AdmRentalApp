@@ -3,6 +3,7 @@ import { ArrowLeft } from 'lucide-react'
 import { PriorityBadge, StatusBadge } from '@/components/tickets/badges'
 import { AttachmentsSection } from '@/components/tickets/attachments-section'
 import { InspectionSection } from '@/components/tickets/inspection-section'
+import { approvalDecisionLabel } from '@/features/tickets/approvals-api'
 import { TicketRequestInfo } from '@/components/tickets/ticket-request-info'
 import { TicketEventsSection } from '@/components/tickets/ticket-events-section'
 import { formatDateTime } from '@/lib/format'
@@ -12,6 +13,7 @@ import type {
   Client,
   ManagedProfile,
   Ticket,
+  TicketApproval,
   TicketEvent,
   TicketInspection,
   TicketPriority,
@@ -41,6 +43,8 @@ export function TicketDetailPage({
   editMessage,
   inspection,
   inspectionLoading,
+  approval,
+  approvalLoading,
   onBack,
   onEditStatusChange,
   onEditPriorityChange,
@@ -67,6 +71,8 @@ export function TicketDetailPage({
   editMessage: string
   inspection: TicketInspection | null
   inspectionLoading: boolean
+  approval: TicketApproval | null
+  approvalLoading: boolean
   onBack: () => void
   onEditStatusChange: (status: TicketStatus) => void
   onEditPriorityChange: (priority: TicketPriority) => void
@@ -147,6 +153,29 @@ export function TicketDetailPage({
         currentStatus={editStatus}
         onApplyRecommendedStatus={onEditStatusChange}
       />
+
+      {!approvalLoading && ticket.status === 'aguardando_aprovacao' && !approval && (
+        <section className="mt-6 rounded-2xl border border-purple-900/50 bg-purple-950/20 p-5">
+          <p className="text-sm font-semibold text-purple-200">
+            Aguardando aprovação do cliente
+          </p>
+          <p className="mt-1 text-sm text-zinc-400">
+            O cliente precisa aprovar ou recusar o laudo e os serviços
+            recomendados antes da execução.
+          </p>
+        </section>
+      )}
+
+      {!approvalLoading && approval && (
+        <section className="mt-6 rounded-2xl border border-zinc-800 bg-zinc-900 p-5">
+          <p className="text-sm font-semibold text-zinc-200">
+            Resposta do cliente: {approvalDecisionLabel(approval.decision)}
+          </p>
+          {approval.notes && (
+            <p className="mt-2 text-sm text-zinc-400">{approval.notes}</p>
+          )}
+        </section>
+      )}
 
       <TicketEventsSection
         events={events}

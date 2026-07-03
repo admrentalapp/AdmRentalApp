@@ -34,6 +34,7 @@ export function eventTypeLabel(eventType: string) {
     anotacao: 'Anotação',
     anexo: 'Anexo',
     laudo_inspecao: 'Laudo de inspeção',
+    aprovacao_cliente: 'Aprovação do cliente',
   }
   return labels[eventType] ?? eventType
 }

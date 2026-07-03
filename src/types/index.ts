@@ -28,6 +28,9 @@ export type AppPage =
   | 'clientes'
   | 'tecnicos'
   | 'equipamentos'
+  | 'estoque'
+  | 'checklist'
+  | 'relatorios'
 
 export type Client = {
   id: string
@@ -127,6 +130,17 @@ export type InspectionCause =
 
 export type InspectionResponsibility = 'adm' | 'cliente'
 
+export type TicketApprovalDecision = 'aprovado' | 'recusado'
+
+export type TicketApproval = {
+  id: string
+  ticket_id: string
+  decision: TicketApprovalDecision
+  notes: string | null
+  responded_by: string
+  responded_at: string
+}
+
 export type TicketInspection = {
   id: string
   ticket_id: string
@@ -157,6 +171,55 @@ export type Attachment = {
   mime_type: string | null
   created_by: string
   created_at: string
+}
+
+export type Part = {
+  id: string
+  sku: string
+  name: string
+  description: string | null
+  unit: string
+  current_stock: number
+  min_stock: number
+  active: boolean
+  created_at: string
+  updated_at: string
+}
+
+export type ChecklistTemplate = {
+  id: string
+  name: string
+  description: string | null
+  active: boolean
+  created_at: string
+}
+
+export type ChecklistItem = {
+  id: string
+  template_id: string
+  label: string
+  sort_order: number
+  required: boolean
+}
+
+export type ChecklistRun = {
+  id: string
+  template_id: string
+  equipment_id: string | null
+  ticket_id: string | null
+  performed_by: string
+  status: 'em_andamento' | 'concluido'
+  notes: string | null
+  created_at: string
+  completed_at: string | null
+}
+
+export type ChecklistRunItem = {
+  id: string
+  run_id: string
+  item_id: string
+  checked: boolean
+  observation: string | null
 }
 
 export type MenuItem = {

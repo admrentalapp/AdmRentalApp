@@ -1,5 +1,5 @@
 import { type FormEvent } from 'react'
-import { Info, Users, X } from 'lucide-react'
+import { Info, Plus, Users, X } from 'lucide-react'
 import { DashboardCard } from '@/components/shared/dashboard-card'
 import { RoleBadge } from '@/components/shared/role-badge'
 import type { Client, ManagedProfile, UserRole } from '@/types'
@@ -21,6 +21,22 @@ export function TechniciansPage({
   onEditRoleChange,
   onEditClientChange,
   onSaveProfile,
+  newUserOpen,
+  newUserEmail,
+  newUserPassword,
+  newUserName,
+  newUserRole,
+  newUserClientId,
+  newUserLoading,
+  newUserMessage,
+  onOpenNewUser,
+  onCloseNewUser,
+  onNewUserEmailChange,
+  onNewUserPasswordChange,
+  onNewUserNameChange,
+  onNewUserRoleChange,
+  onNewUserClientChange,
+  onCreateUser,
 }: {
   profiles: ManagedProfile[]
   clients: Client[]
@@ -37,6 +53,22 @@ export function TechniciansPage({
   onEditRoleChange: (role: UserRole) => void
   onEditClientChange: (value: string) => void
   onSaveProfile: (event: FormEvent<HTMLFormElement>) => void
+  newUserOpen: boolean
+  newUserEmail: string
+  newUserPassword: string
+  newUserName: string
+  newUserRole: UserRole
+  newUserClientId: string
+  newUserLoading: boolean
+  newUserMessage: string
+  onOpenNewUser: () => void
+  onCloseNewUser: () => void
+  onNewUserEmailChange: (value: string) => void
+  onNewUserPasswordChange: (value: string) => void
+  onNewUserNameChange: (value: string) => void
+  onNewUserRoleChange: (role: UserRole) => void
+  onNewUserClientChange: (value: string) => void
+  onCreateUser: (event: FormEvent<HTMLFormElement>) => void
 }) {
   const maintenanceAdmCount = profiles.filter(
     (item) => item.role === 'manutencao_adm',
@@ -75,21 +107,30 @@ export function TechniciansPage({
 
   return (
     <>
-      <section>
-        <p className="text-sm text-zinc-500">Usuários e acessos</p>
-        <h3 className="mt-1 text-2xl font-bold">Usuários e acessos</h3>
-        <p className="mt-2 text-sm text-zinc-400">
-          Defina o papel de cada usuário. Manutenção ADM e Manutenção Externa
-          aparecem para atribuição de chamados.
-        </p>
+      <section className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="text-sm text-zinc-500">Usuários e acessos</p>
+          <h3 className="mt-1 text-2xl font-bold">Usuários e acessos</h3>
+          <p className="mt-2 text-sm text-zinc-400">
+            Crie logins e defina o papel de cada usuário.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={onOpenNewUser}
+          className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-700"
+        >
+          <Plus size={16} />
+          Novo usuário
+        </button>
       </section>
 
       <section className="mt-6 flex gap-3 rounded-2xl border border-blue-950 bg-blue-950/30 p-4 text-sm text-blue-200">
         <Info size={18} className="mt-0.5 shrink-0" />
         <p>
-          O login (e-mail e senha) é criado no Supabase Auth — pelo cadastro do
-          próprio usuário ou pelo painel do Supabase. Aqui o gestor apenas
-          define o papel e, para clientes, a empresa vinculada.
+          Novos usuários são criados pelo app via Edge Function{' '}
+          <code className="text-blue-100">create-user</code> (deploy no Supabase).
+          Aqui você também pode ajustar papel e empresa vinculada.
         </p>
       </section>
 
@@ -304,6 +345,93 @@ export function TechniciansPage({
                   {editLoading ? 'Salvando...' : 'Salvar alterações'}
                 </button>
               </div>
+            </form>
+          </section>
+        </div>
+      )}
+
+      {newUserOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-5">
+          <section className="w-full max-w-md rounded-2xl border border-zinc-800 bg-zinc-900 p-6 shadow-2xl">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-sm text-zinc-500">Novo acesso</p>
+                <h3 className="mt-1 text-xl font-bold">Criar usuário</h3>
+              </div>
+              <button
+                type="button"
+                onClick={onCloseNewUser}
+                className="rounded-lg p-2 text-zinc-400 hover:bg-zinc-800"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <form className="mt-6 space-y-4" onSubmit={onCreateUser}>
+              <input
+                type="text"
+                value={newUserName}
+                onChange={(event) => onNewUserNameChange(event.target.value)}
+                placeholder="Nome completo"
+                required
+                className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-3 text-white"
+              />
+              <input
+                type="email"
+                value={newUserEmail}
+                onChange={(event) => onNewUserEmailChange(event.target.value)}
+                placeholder="E-mail de login"
+                required
+                className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-3 text-white"
+              />
+              <input
+                type="password"
+                value={newUserPassword}
+                onChange={(event) => onNewUserPasswordChange(event.target.value)}
+                placeholder="Senha inicial (mín. 6 caracteres)"
+                required
+                minLength={6}
+                className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-3 text-white"
+              />
+              <select
+                value={newUserRole}
+                onChange={(event) =>
+                  onNewUserRoleChange(event.target.value as UserRole)
+                }
+                className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-3 text-white"
+              >
+                <option value="cliente">Cliente</option>
+                <option value="manutencao_adm">Manutenção ADM</option>
+                <option value="manutencao_externa">Manutenção Externa</option>
+                <option value="gestor_adm">Gestor ADM</option>
+              </select>
+              {newUserRole === 'cliente' && (
+                <select
+                  value={newUserClientId}
+                  onChange={(event) => onNewUserClientChange(event.target.value)}
+                  className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-3 text-white"
+                  required
+                >
+                  <option value="">Empresa vinculada...</option>
+                  {clients.map((client) => (
+                    <option key={client.id} value={client.id}>
+                      {client.name}
+                    </option>
+                  ))}
+                </select>
+              )}
+              {newUserMessage && (
+                <p className="rounded-lg border border-red-900 bg-red-950/40 p-3 text-sm text-red-200">
+                  {newUserMessage}
+                </p>
+              )}
+              <button
+                type="submit"
+                disabled={newUserLoading}
+                className="w-full rounded-lg bg-red-600 py-3 font-semibold text-white disabled:opacity-60"
+              >
+                {newUserLoading ? 'Criando...' : 'Criar usuário'}
+              </button>
             </form>
           </section>
         </div>

@@ -1,11 +1,12 @@
 import { ArrowLeft } from 'lucide-react'
 import { PriorityBadge, StatusBadge } from '@/components/tickets/badges'
+import { ClientApprovalSection } from '@/components/tickets/client-approval-section'
 import { AttachmentsSection } from '@/components/tickets/attachments-section'
 import { InspectionSection } from '@/components/tickets/inspection-section'
 import { TicketRequestInfo } from '@/components/tickets/ticket-request-info'
 import { TicketEventsSection } from '@/components/tickets/ticket-events-section'
 import { formatDateTime } from '@/lib/format'
-import type { Attachment, Ticket, TicketEvent, TicketInspection } from '@/types'
+import type { Attachment, Ticket, TicketApproval, TicketEvent, TicketInspection } from '@/types'
 
 export function ClientTicketDetailPage({
   ticket,
@@ -22,6 +23,11 @@ export function ClientTicketDetailPage({
   onUpload,
   inspection,
   inspectionLoading,
+  approval,
+  approvalLoading,
+  approvalSubmitLoading,
+  approvalSubmitError,
+  onRespondApproval,
   onBack,
 }: {
   ticket: Ticket
@@ -38,6 +44,14 @@ export function ClientTicketDetailPage({
   onUpload?: (file: File) => void | Promise<void>
   inspection: TicketInspection | null
   inspectionLoading: boolean
+  approval: TicketApproval | null
+  approvalLoading: boolean
+  approvalSubmitLoading: boolean
+  approvalSubmitError: string
+  onRespondApproval: (
+    decision: 'aprovado' | 'recusado',
+    notes: string,
+  ) => void | Promise<void>
   onBack: () => void
 }) {
   return (
@@ -85,6 +99,16 @@ export function ClientTicketDetailPage({
         inspection={inspection}
         loading={inspectionLoading}
         currentStatus={ticket.status}
+      />
+
+      <ClientApprovalSection
+        ticket={ticket}
+        inspection={inspection}
+        approval={approval}
+        loading={approvalLoading}
+        submitLoading={approvalSubmitLoading}
+        submitError={approvalSubmitError}
+        onRespond={onRespondApproval}
       />
 
       <TicketEventsSection events={events} loading={eventsLoading} />

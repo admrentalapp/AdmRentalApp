@@ -1,75 +1,79 @@
-# React + TypeScript + Vite
+# ADM Manutenção
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Sistema de gestão de manutenção e chamados para locação de equipamentos (ADM Rental).
 
-Currently, two official plugins are available:
+## Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- React 19 + TypeScript + Vite
+- Tailwind CSS v4 + shadcn/ui
+- Supabase (Auth, Postgres, Storage, Edge Functions)
+- PWA (vite-plugin-pwa)
 
-## React Compiler
+## Perfis de acesso
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+| Papel | Descrição |
+|-------|-----------|
+| `gestor_adm` | Dashboard, triagem, usuários, estoque, relatórios |
+| `manutencao_adm` | Chamados atribuídos, laudo de inspeção |
+| `manutencao_externa` | Idem manutenção ADM (terceiro) |
+| `cliente` | Abertura de chamados, aprovação de laudos |
 
-## Expanding the ESLint configuration
+## Variáveis de ambiente
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+Copie `.env.example` para `.env.local`:
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
+```env
+VITE_SUPABASE_URL=https://seu-projeto.supabase.co
+VITE_SUPABASE_PUBLISHABLE_KEY=sua-chave-publishable
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Na **Vercel**, configure as mesmas variáveis em *Settings → Environment Variables*.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Desenvolvimento local
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
+```bash
+npm install
+npm run dev
 ```
+
+Build de produção:
+
+```bash
+npm run build
+```
+
+## Banco de dados (Supabase)
+
+Execute os scripts SQL na ordem documentada em [`supabase/README.md`](supabase/README.md).
+
+## Edge Function: criar usuários
+
+O gestor cria usuários pelo app (menu **Usuários → Novo usuário**). Publique a função:
+
+```bash
+npx supabase login
+npx supabase link --project-ref SEU_PROJECT_REF
+npx supabase functions deploy create-user
+```
+
+A função usa automaticamente `SUPABASE_URL`, `SUPABASE_ANON_KEY` e `SUPABASE_SERVICE_ROLE_KEY` do projeto.
+
+## Deploy (Vercel)
+
+1. Conecte o repositório GitHub à Vercel
+2. Framework: **Vite** · Output: `dist` · Build: `npm run build`
+3. Configure `VITE_SUPABASE_*`
+4. No Supabase → **Authentication → URL Configuration**, adicione a URL da Vercel
+
+## Fluxo principal
+
+1. **Cliente** abre chamado (obra, equipamento, anexos)
+2. **Gestor** faz triagem e atribui manutenção
+3. **Manutenção** registra laudo de inspeção
+4. Se responsabilidade **cliente** → status `aguardando_aprovacao`
+5. **Cliente** aprova ou recusa → `em_execucao` ou retorno à `triagem`
+6. Gestor conclui o chamado
+
+## Licença
+
+Uso interno ADM Rental.
