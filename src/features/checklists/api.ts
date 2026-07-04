@@ -16,14 +16,19 @@ export async function fetchChecklistItems(templateId: string) {
     .order('sort_order', { ascending: true })
 }
 
-export async function fetchChecklistRuns() {
-  return supabase
+export async function fetchChecklistRuns(limit = 20) {
+  let query = supabase
     .from('checklist_runs')
     .select(
       'id, template_id, equipment_id, ticket_id, performed_by, status, notes, created_at, completed_at',
     )
     .order('created_at', { ascending: false })
-    .limit(20)
+
+  if (limit > 0) {
+    query = query.limit(limit)
+  }
+
+  return query
 }
 
 export async function startChecklistRun(input: {

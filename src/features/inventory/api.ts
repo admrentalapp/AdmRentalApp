@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase'
-import type { Part } from '@/types'
+import type { Part, PartMovement } from '@/types'
 
 export async function fetchParts() {
   return supabase
@@ -37,6 +37,15 @@ export async function createPart(input: {
     .single()
 }
 
+export async function fetchPartMovements() {
+  return supabase
+    .from('part_movements')
+    .select(
+      'id, part_id, movement_type, quantity, notes, ticket_id, created_by, created_at',
+    )
+    .order('created_at', { ascending: false })
+}
+
 export async function registerPartMovement(input: {
   partId: string
   movementType: 'entrada' | 'saida' | 'ajuste'
@@ -54,4 +63,8 @@ export async function registerPartMovement(input: {
 
 export function isPartBelowMinimum(part: Part) {
   return part.current_stock < part.min_stock
+}
+
+export function parsePartMovements(data: unknown) {
+  return (data ?? []) as PartMovement[]
 }

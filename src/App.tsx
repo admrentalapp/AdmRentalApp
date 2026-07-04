@@ -1,10 +1,7 @@
-import { useCallback, useEffect, useState, type FormEvent } from 'react'
+import { Suspense, lazy, useCallback, useEffect, useState, type FormEvent } from 'react'
 import { AlertTriangle, Bell, ClipboardList, LogOut, Menu, Plus, Trash2, X } from 'lucide-react'
 import { AppLogo } from '@/components/shared/app-logo'
-import { LoginBackground } from '@/components/auth/login-background'
 import { ThemeToggle } from '@/components/theme/theme-toggle'
-import { ClientEditTicketModal } from '@/components/tickets/client-edit-ticket-modal'
-import { ClientNewTicketModal } from '@/components/tickets/client-new-ticket-modal'
 import type { InspectionFormValues } from '@/components/tickets/inspection-section'
 import { PriorityBadge, StatusBadge } from '@/components/tickets/badges'
 import { managerMenuItems } from '@/config/menu'
@@ -27,6 +24,8 @@ import {
 } from '@/features/tickets/api'
 import {
   fetchTicketApproval,
+  fetchTicketApprovals,
+  parseTicketApprovals,
   parseTicketApproval,
   respondTicketApproval,
 } from '@/features/tickets/approvals-api'
@@ -46,7 +45,9 @@ import {
 import {
   createPart,
   fetchParts,
+  fetchPartMovements,
   parseParts,
+  parsePartMovements,
   registerPartMovement,
 } from '@/features/inventory/api'
 import { createManagedUser } from '@/features/users/api'
@@ -57,18 +58,6 @@ import {
 import { formatDateTime } from '@/lib/format'
 import { priorityLabel, roleLabel, statusLabel } from '@/lib/tickets'
 import { supabase } from '@/lib/supabase'
-import { ClientTicketDetailPage } from '@/pages/client-ticket-detail-page'
-import { ClientsPage } from '@/pages/clients-page'
-import { DashboardPage } from '@/pages/dashboard-page'
-import { ChecklistPage } from '@/pages/checklist-page'
-import { EquipmentPage } from '@/pages/equipment-page'
-import { InventoryPage } from '@/pages/inventory-page'
-import { ReportsPage } from '@/pages/reports-page'
-import { SitesPage } from '@/pages/sites-page'
-import { TechniciansPage } from '@/pages/technicians-page'
-import { TechnicianTicketDetailPage } from '@/pages/technician-ticket-detail-page'
-import { TicketDetailPage } from '@/pages/ticket-detail-page'
-import { TicketsPage } from '@/pages/tickets-page'
 import type {
   AppPage,
   Attachment,
@@ -79,6 +68,7 @@ import type {
   EquipmentWithAllocation,
   ManagedProfile,
   Part,
+  PartMovement,
   Profile,
   Site,
   Ticket,
@@ -90,6 +80,104 @@ import type {
   UserRole,
 } from '@/types'
 import { TEST_CLIENT_NAME, isMaintenanceRole } from '@/types'
+
+const LoginBackground = lazy(() =>
+  import('@/components/auth/login-background').then((module) => ({
+    default: module.LoginBackground,
+  })),
+)
+
+const ClientEditTicketModal = lazy(() =>
+  import('@/components/tickets/client-edit-ticket-modal').then((module) => ({
+    default: module.ClientEditTicketModal,
+  })),
+)
+
+const ClientNewTicketModal = lazy(() =>
+  import('@/components/tickets/client-new-ticket-modal').then((module) => ({
+    default: module.ClientNewTicketModal,
+  })),
+)
+
+const ClientTicketDetailPage = lazy(() =>
+  import('@/pages/client-ticket-detail-page').then((module) => ({
+    default: module.ClientTicketDetailPage,
+  })),
+)
+
+const ClientsPage = lazy(() =>
+  import('@/pages/clients-page').then((module) => ({
+    default: module.ClientsPage,
+  })),
+)
+
+const DashboardPage = lazy(() =>
+  import('@/pages/dashboard-page').then((module) => ({
+    default: module.DashboardPage,
+  })),
+)
+
+const ChecklistPage = lazy(() =>
+  import('@/pages/checklist-page').then((module) => ({
+    default: module.ChecklistPage,
+  })),
+)
+
+const EquipmentPage = lazy(() =>
+  import('@/pages/equipment-page').then((module) => ({
+    default: module.EquipmentPage,
+  })),
+)
+
+const InventoryPage = lazy(() =>
+  import('@/pages/inventory-page').then((module) => ({
+    default: module.InventoryPage,
+  })),
+)
+
+const ReportsPage = lazy(() =>
+  import('@/pages/reports-page').then((module) => ({
+    default: module.ReportsPage,
+  })),
+)
+
+const SitesPage = lazy(() =>
+  import('@/pages/sites-page').then((module) => ({
+    default: module.SitesPage,
+  })),
+)
+
+const TechniciansPage = lazy(() =>
+  import('@/pages/technicians-page').then((module) => ({
+    default: module.TechniciansPage,
+  })),
+)
+
+const TechnicianTicketDetailPage = lazy(() =>
+  import('@/pages/technician-ticket-detail-page').then((module) => ({
+    default: module.TechnicianTicketDetailPage,
+  })),
+)
+
+const TicketDetailPage = lazy(() =>
+  import('@/pages/ticket-detail-page').then((module) => ({
+    default: module.TicketDetailPage,
+  })),
+)
+
+const TicketsPage = lazy(() =>
+  import('@/pages/tickets-page').then((module) => ({
+    default: module.TicketsPage,
+  })),
+)
+
+function PageLoader({ message = 'Carregando tela...' }: { message?: string }) {
+  return (
+    <div className="rounded-2xl border border-border bg-card/70 p-8 text-sm text-muted-foreground shadow-sm">
+      {message}
+    </div>
+  )
+}
 
 export default function App() {
   const [email, setEmail] = useState('')
@@ -235,6 +323,11 @@ export default function App() {
   const [dashboardLoading, setDashboardLoading] = useState(false)
 
   const [parts, setParts] = useState<Part[]>([])
+  const [reportPartMovements, setReportPartMovements] = useState<PartMovement[]>([])
+  const [reportApprovals, setReportApprovals] = useState<TicketApproval[]>([])
+  const [reportChecklistRuns, setReportChecklistRuns] = useState<ChecklistRun[]>([])
+  const [reportsLoading, setReportsLoading] = useState(false)
+  const [reportsError, setReportsError] = useState('')
   const [partsLoading, setPartsLoading] = useState(false)
   const [partsError, setPartsError] = useState('')
   const [newPartOpen, setNewPartOpen] = useState(false)
@@ -369,6 +462,21 @@ export default function App() {
     setEquipmentFleet(mergeEquipmentWithAllocations(equipment, allocations))
   }, [])
 
+  const loadDashboardData = useCallback(async (ticketList: Ticket[]) => {
+    setDashboardLoading(true)
+
+    const ticketIds = ticketList.map((ticket) => ticket.id)
+    const [eventsResult, lookupsResult] = await Promise.all([
+      fetchDashboardEvents(ticketIds),
+      fetchDashboardLookups(ticketList),
+    ])
+
+    setDashboardEvents(eventsResult.data ?? [])
+    setDashboardSiteLabels(lookupsResult.siteLabels)
+    setDashboardEquipmentLabels(lookupsResult.equipmentLabels)
+    setDashboardLoading(false)
+  }, [])
+
   const loadTickets = useCallback(async (statusFilter = '') => {
     setTicketsLoading(true)
     setTicketsError('')
@@ -392,8 +500,16 @@ export default function App() {
       return
     }
 
-    setTickets((data ?? []) as Ticket[])
-  }, [])
+    const parsedTickets = (data ?? []) as Ticket[]
+    setTickets(parsedTickets)
+
+    if (
+      profile?.role === 'gestor_adm' &&
+      (activePage === 'dashboard' || activePage === 'relatorios')
+    ) {
+      void loadDashboardData(parsedTickets)
+    }
+  }, [activePage, loadDashboardData, profile?.role])
 
   const loadTechnicianTickets = useCallback(async (technicianId: string) => {
     setTicketsLoading(true)
@@ -485,21 +601,6 @@ export default function App() {
     setTicketApproval(parseTicketApproval(data))
   }, [])
 
-  const loadDashboardData = useCallback(async (ticketList: Ticket[]) => {
-    setDashboardLoading(true)
-
-    const ticketIds = ticketList.map((ticket) => ticket.id)
-    const [eventsResult, lookupsResult] = await Promise.all([
-      fetchDashboardEvents(ticketIds),
-      fetchDashboardLookups(ticketList),
-    ])
-
-    setDashboardEvents(eventsResult.data ?? [])
-    setDashboardSiteLabels(lookupsResult.siteLabels)
-    setDashboardEquipmentLabels(lookupsResult.equipmentLabels)
-    setDashboardLoading(false)
-  }, [])
-
   const loadParts = useCallback(async () => {
     setPartsLoading(true)
     setPartsError('')
@@ -533,6 +634,42 @@ export default function App() {
     }
     setChecklistTemplates(parseTemplates(templatesResult.data))
     setChecklistRuns(parseRuns(runsResult.data))
+  }, [])
+
+  const loadReportsData = useCallback(async () => {
+    setReportsLoading(true)
+    setReportsError('')
+
+    const [approvalsResult, runsResult, movementsResult, templatesResult] =
+      await Promise.all([
+        fetchTicketApprovals(),
+        fetchChecklistRuns(0),
+        fetchPartMovements(),
+        fetchChecklistTemplates(),
+      ])
+
+    setReportsLoading(false)
+
+    setReportApprovals(
+      approvalsResult.error ? [] : parseTicketApprovals(approvalsResult.data),
+    )
+    setReportChecklistRuns(runsResult.error ? [] : parseRuns(runsResult.data))
+    setReportPartMovements(
+      movementsResult.error ? [] : parsePartMovements(movementsResult.data),
+    )
+
+    if (!templatesResult.error) {
+      setChecklistTemplates(parseTemplates(templatesResult.data))
+    }
+
+    const loadError =
+      approvalsResult.error?.message ||
+      runsResult.error?.message ||
+      movementsResult.error?.message ||
+      templatesResult.error?.message ||
+      ''
+
+    setReportsError(loadError)
   }, [])
 
   const loadTicketAttachments = useCallback(async (ticketId: string) => {
@@ -579,8 +716,7 @@ export default function App() {
       setMessage('')
 
       if (loadedProfile.role === 'gestor_adm') {
-        await loadClients()
-        await loadTickets()
+        await Promise.all([loadClients(), loadTickets(), loadProfiles()])
       }
 
       if (isMaintenanceRole(loadedProfile.role)) {
@@ -608,7 +744,14 @@ export default function App() {
         }
       }
     },
-    [loadClients, loadTickets, loadTechnicianTickets, loadClientTickets, loadEquipmentSitesForClient],
+    [
+      loadClients,
+      loadTickets,
+      loadProfiles,
+      loadTechnicianTickets,
+      loadClientTickets,
+      loadEquipmentSitesForClient,
+    ],
   )
 
   useEffect(() => {
@@ -643,13 +786,6 @@ export default function App() {
       subscription.unsubscribe()
     }
   }, [loadProfile])
-
-  useEffect(() => {
-    if (profile?.role !== 'gestor_adm' || activePage !== 'dashboard') return
-
-    void loadProfiles()
-    void loadDashboardData(tickets)
-  }, [profile, activePage, tickets, loadProfiles, loadDashboardData])
 
   async function handleLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -1683,6 +1819,10 @@ export default function App() {
     if (page === 'clientes' || page === 'dashboard') {
       void loadClients()
       void loadTickets()
+
+      if (page === 'dashboard' && profile?.role === 'gestor_adm') {
+        void loadProfiles()
+      }
     }
 
     if (page === 'tecnicos') {
@@ -1715,8 +1855,11 @@ export default function App() {
     }
 
     if (page === 'relatorios') {
+      void loadClients()
+      void loadProfiles()
       void loadTickets()
       void loadParts()
+      void loadReportsData()
     }
   }
 
@@ -1727,31 +1870,33 @@ export default function App() {
       return (
         <main className="min-h-svh bg-background p-5 text-foreground sm:p-8">
           <div className="mx-auto max-w-3xl">
-            <TechnicianTicketDetailPage
-              ticket={viewingTicket}
-              siteName={viewingTicketSiteName}
-              equipmentLabel={viewingTicketEquipmentLabel}
-              events={ticketEvents}
-              eventsLoading={ticketEventsLoading}
-              attachments={ticketAttachments}
-              attachmentsLoading={ticketAttachmentsLoading}
-              canUpload
-              uploading={attachmentUploadLoading}
-              uploadError={attachmentUploadError}
-              onUpload={handleUploadAttachment}
-              eventMessage={techEventMessage}
-              eventLoading={techEventLoading}
-              eventError={techEventError}
-              inspection={ticketInspection}
-              inspectionLoading={ticketInspectionLoading}
-              inspectionSaveLoading={inspectionSaveLoading}
-              inspectionSaveError={inspectionSaveError}
-              inspectionSaveSuccess={inspectionSaveSuccess}
-              onSaveInspection={handleSaveInspection}
-              onBack={backToTicketsList}
-              onEventMessageChange={setTechEventMessage}
-              onAddEvent={handleTechnicianAddEvent}
-            />
+            <Suspense fallback={<PageLoader message="Carregando chamado..." />}>
+              <TechnicianTicketDetailPage
+                ticket={viewingTicket}
+                siteName={viewingTicketSiteName}
+                equipmentLabel={viewingTicketEquipmentLabel}
+                events={ticketEvents}
+                eventsLoading={ticketEventsLoading}
+                attachments={ticketAttachments}
+                attachmentsLoading={ticketAttachmentsLoading}
+                canUpload
+                uploading={attachmentUploadLoading}
+                uploadError={attachmentUploadError}
+                onUpload={handleUploadAttachment}
+                eventMessage={techEventMessage}
+                eventLoading={techEventLoading}
+                eventError={techEventError}
+                inspection={ticketInspection}
+                inspectionLoading={ticketInspectionLoading}
+                inspectionSaveLoading={inspectionSaveLoading}
+                inspectionSaveError={inspectionSaveError}
+                inspectionSaveSuccess={inspectionSaveSuccess}
+                onSaveInspection={handleSaveInspection}
+                onBack={backToTicketsList}
+                onEventMessageChange={setTechEventMessage}
+                onAddEvent={handleTechnicianAddEvent}
+              />
+            </Suspense>
           </div>
         </main>
       )
@@ -1821,24 +1966,26 @@ export default function App() {
 
           {technicianPage === 'checklist' ? (
             <div className="mt-8">
-              <ChecklistPage
-                templates={checklistTemplates}
-                runs={checklistRuns}
-                equipment={equipmentFleet}
-                loading={checklistLoading}
-                error={checklistError}
-                selectedTemplateId={checklistTemplateId}
-                selectedEquipmentId={checklistEquipmentId}
-                notes={checklistNotes}
-                startLoading={checklistStartLoading}
-                startMessage={checklistStartMessage}
-                isGestor={false}
-                onTemplateChange={setChecklistTemplateId}
-                onEquipmentChange={setChecklistEquipmentId}
-                onNotesChange={setChecklistNotes}
-                onStartRun={handleStartChecklist}
-                onReload={() => void loadChecklistData()}
-              />
+              <Suspense fallback={<PageLoader message="Carregando checklist..." />}>
+                <ChecklistPage
+                  templates={checklistTemplates}
+                  runs={checklistRuns}
+                  equipment={equipmentFleet}
+                  loading={checklistLoading}
+                  error={checklistError}
+                  selectedTemplateId={checklistTemplateId}
+                  selectedEquipmentId={checklistEquipmentId}
+                  notes={checklistNotes}
+                  startLoading={checklistStartLoading}
+                  startMessage={checklistStartMessage}
+                  isGestor={false}
+                  onTemplateChange={setChecklistTemplateId}
+                  onEquipmentChange={setChecklistEquipmentId}
+                  onNotesChange={setChecklistNotes}
+                  onStartRun={handleStartChecklist}
+                  onReload={() => void loadChecklistData()}
+                />
+              </Suspense>
             </div>
           ) : (
             <section className="mt-8 overflow-hidden rounded-2xl border border-border bg-card">
@@ -1935,47 +2082,51 @@ export default function App() {
       return (
         <main className="min-h-svh bg-background p-5 text-foreground sm:p-8">
           <div className="mx-auto max-w-3xl">
-            <ClientTicketDetailPage
-              ticket={viewingTicket}
-              companyName={clientCompanyName}
-              siteName={resolveTicketSiteName(viewingTicket)}
-              equipmentLabel={resolveTicketEquipmentLabel(viewingTicket)}
-              events={ticketEvents}
-              eventsLoading={ticketEventsLoading}
-              attachments={ticketAttachments}
-              attachmentsLoading={ticketAttachmentsLoading}
-              canUpload
-              uploading={attachmentUploadLoading}
-              uploadError={attachmentUploadError}
-              onUpload={handleUploadAttachment}
-              inspection={ticketInspection}
-              inspectionLoading={ticketInspectionLoading}
-              approval={ticketApproval}
-              approvalLoading={ticketApprovalLoading}
-              approvalSubmitLoading={approvalSubmitLoading}
-              approvalSubmitError={approvalSubmitError}
-              onRespondApproval={handleClientApproval}
-              onEditTicket={() => {
-                setClientDeleteError('')
-                setClientEditTicketOpen(true)
-              }}
-              onDeleteTicket={() => {
-                setClientDeleteError('')
-                setClientDeleteTicket(viewingTicket)
-              }}
-              onBack={backToTicketsList}
-            />
+            <Suspense fallback={<PageLoader message="Carregando chamado..." />}>
+              <ClientTicketDetailPage
+                ticket={viewingTicket}
+                companyName={clientCompanyName}
+                siteName={resolveTicketSiteName(viewingTicket)}
+                equipmentLabel={resolveTicketEquipmentLabel(viewingTicket)}
+                events={ticketEvents}
+                eventsLoading={ticketEventsLoading}
+                attachments={ticketAttachments}
+                attachmentsLoading={ticketAttachmentsLoading}
+                canUpload
+                uploading={attachmentUploadLoading}
+                uploadError={attachmentUploadError}
+                onUpload={handleUploadAttachment}
+                inspection={ticketInspection}
+                inspectionLoading={ticketInspectionLoading}
+                approval={ticketApproval}
+                approvalLoading={ticketApprovalLoading}
+                approvalSubmitLoading={approvalSubmitLoading}
+                approvalSubmitError={approvalSubmitError}
+                onRespondApproval={handleClientApproval}
+                onEditTicket={() => {
+                  setClientDeleteError('')
+                  setClientEditTicketOpen(true)
+                }}
+                onDeleteTicket={() => {
+                  setClientDeleteError('')
+                  setClientDeleteTicket(viewingTicket)
+                }}
+                onBack={backToTicketsList}
+              />
 
-            <ClientEditTicketModal
-              open={clientEditTicketOpen}
-              companyName={clientCompanyName}
-              ticket={viewingTicket}
-              userId={profile.id}
-              sites={clientFormSites}
-              allocatedFleet={clientAllocatedFleet}
-              onClose={() => setClientEditTicketOpen(false)}
-              onUpdated={handleClientTicketUpdated}
-            />
+              {clientEditTicketOpen && (
+                <ClientEditTicketModal
+                  open={clientEditTicketOpen}
+                  companyName={clientCompanyName}
+                  ticket={viewingTicket}
+                  userId={profile.id}
+                  sites={clientFormSites}
+                  allocatedFleet={clientAllocatedFleet}
+                  onClose={() => setClientEditTicketOpen(false)}
+                  onUpdated={handleClientTicketUpdated}
+                />
+              )}
+            </Suspense>
 
             {clientDeleteTicket && (
               <div className="fixed inset-0 z-60 flex items-center justify-center overflow-y-auto bg-black/60 p-4 backdrop-blur-sm">
@@ -2165,29 +2316,31 @@ export default function App() {
           </section>
         </div>
 
-        {profile.client_id && (
-          <ClientNewTicketModal
-            open={clientNewTicketOpen}
-            companyName={clientCompanyName}
-            clientId={profile.client_id}
-            userId={profile.id}
-            sites={clientFormSites}
-            allocatedFleet={clientAllocatedFleet}
-            onClose={() => setClientNewTicketOpen(false)}
-            onCreated={async (warning) => {
-              if (warning) {
-                setClientNewMessage(warning)
-              } else {
-                setClientNewMessage('Chamado aberto com sucesso.')
-              }
+        {profile.client_id && clientNewTicketOpen && (
+          <Suspense fallback={null}>
+            <ClientNewTicketModal
+              open={clientNewTicketOpen}
+              companyName={clientCompanyName}
+              clientId={profile.client_id}
+              userId={profile.id}
+              sites={clientFormSites}
+              allocatedFleet={clientAllocatedFleet}
+              onClose={() => setClientNewTicketOpen(false)}
+              onCreated={async (warning) => {
+                if (warning) {
+                  setClientNewMessage(warning)
+                } else {
+                  setClientNewMessage('Chamado aberto com sucesso.')
+                }
 
-              const fleetResult = await fetchClientAllocatedFleet(
-                profile.client_id!,
-              )
-              setClientAllocatedFleet(fleetResult.data)
-              await loadClientTickets()
-            }}
-          />
+                const fleetResult = await fetchClientAllocatedFleet(
+                  profile.client_id!,
+                )
+                setClientAllocatedFleet(fleetResult.data)
+                await loadClientTickets()
+              }}
+            />
+          </Suspense>
         )}
       </main>
     )
@@ -2204,7 +2357,9 @@ export default function App() {
   if (!profile) {
     return (
       <main className="relative flex min-h-svh items-center justify-center overflow-hidden bg-zinc-950 p-5 text-white">
-        <LoginBackground />
+        <Suspense fallback={null}>
+          <LoginBackground />
+        </Suspense>
 
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(220,38,38,0.12),transparent_55%)]" />
         <div className="pointer-events-none absolute inset-0 bg-linear-to-b from-transparent via-zinc-950/40 to-zinc-950" />
@@ -2409,274 +2564,292 @@ export default function App() {
         </header>
 
         <div className="p-5 sm:p-8">
-          {activePage === 'dashboard' && (
-            <DashboardPage
-              tickets={tickets}
-              events={dashboardEvents}
-              profiles={profiles}
-              equipmentLabels={dashboardEquipmentLabels}
-              siteLabels={dashboardSiteLabels}
-              loading={ticketsLoading || dashboardLoading}
-              onGoToTickets={() => changePage('chamados')}
-            />
-          )}
-
-          {activePage === 'clientes' &&
-            (viewingClient ? (
-              <SitesPage
-                client={viewingClient}
-                sites={sites}
-                loading={sitesLoading}
-                error={sitesError}
-                modalOpen={newSiteOpen}
-                newSiteName={newSiteName}
-                newSiteAddress={newSiteAddress}
-                newSiteLoading={newSiteLoading}
-                newSiteMessage={newSiteMessage}
-                onBack={backToClients}
-                onOpenModal={openNewSiteModal}
-                onCloseModal={closeNewSiteModal}
-                onNewSiteNameChange={setNewSiteName}
-                onNewSiteAddressChange={setNewSiteAddress}
-                onCreateSite={handleCreateSite}
-              />
-            ) : (
-              <ClientsPage
-                clients={clients}
-                loading={clientsLoading}
-                error={clientsError}
-                modalOpen={newClientOpen}
-                newClientName={newClientName}
-                newClientLoading={newClientLoading}
-                newClientMessage={newClientMessage}
-                onOpenModal={() => openNewClientModal()}
-                onCloseModal={closeNewClientModal}
-                onNewClientNameChange={setNewClientName}
-                onCreateClient={handleCreateClient}
-                onCreateTestClient={handleCreateTestClient}
-                onOpenClient={openClientSites}
-              />
-            ))}
-
-          {activePage === 'chamados' &&
-            (viewingTicket ? (
-              <TicketDetailPage
-                ticket={viewingTicket}
-                clients={clients}
-                profiles={profiles}
-                siteName={viewingTicketSiteName}
-                equipmentLabel={viewingTicketEquipmentLabel}
-                events={ticketEvents}
-                eventsLoading={ticketEventsLoading}
-                attachments={ticketAttachments}
-                attachmentsLoading={ticketAttachmentsLoading}
-                canUpload
-                uploading={attachmentUploadLoading}
-                uploadError={attachmentUploadError}
-                onUpload={handleUploadAttachment}
-                editStatus={editTicketStatus}
-                editPriority={editTicketPriority}
-                editTechnicianId={editTicketTechnicianId}
-                editLoading={editTicketLoading}
-                editMessage={editTicketMessage}
-                inspection={ticketInspection}
-                inspectionLoading={ticketInspectionLoading}
-                approval={ticketApproval}
-                approvalLoading={ticketApprovalLoading}
-                onBack={backToTicketsList}
-                onEditStatusChange={setEditTicketStatus}
-                onEditPriorityChange={setEditTicketPriority}
-                onEditTechnicianChange={setEditTicketTechnicianId}
-                onSave={handleUpdateTicket}
-              />
-            ) : (
-              <TicketsPage
+          <Suspense fallback={<PageLoader />}>
+            {activePage === 'dashboard' && (
+              <DashboardPage
                 tickets={tickets}
-                clients={clients}
-                loading={ticketsLoading}
-                error={ticketsError}
-                statusFilter={ticketStatusFilter}
-                modalOpen={newTicketOpen}
-                newClientId={newTicketClientId}
-                newSiteId={newTicketSiteId}
-                newEquipmentId={newTicketEquipmentId}
-                newTitle={newTicketTitle}
-                newDescription={newTicketDescription}
-                newPriority={newTicketPriority}
-                newLoading={newTicketLoading}
-                newMessage={newTicketMessage}
-                formSites={ticketFormSites}
-                formEquipment={ticketFormEquipment}
-                onSelectStatusFilter={(status) =>
-                  void selectTicketStatusFilter(status)
-                }
-                onOpenModal={openNewTicketModal}
-                onCloseModal={closeNewTicketModal}
-                onSelectClient={(clientId) =>
-                  void selectNewTicketClient(clientId)
-                }
-                onNewSiteChange={setNewTicketSiteId}
-                onNewEquipmentChange={setNewTicketEquipmentId}
-                onNewTitleChange={setNewTicketTitle}
-                onNewDescriptionChange={setNewTicketDescription}
-                onNewPriorityChange={setNewTicketPriority}
-                onCreateTicket={handleCreateTicket}
-                onOpenTicket={openTicketDetail}
+                events={dashboardEvents}
+                profiles={profiles}
+                equipmentLabels={dashboardEquipmentLabels}
+                siteLabels={dashboardSiteLabels}
+                loading={ticketsLoading || dashboardLoading}
+                onGoToTickets={() => changePage('chamados')}
               />
-            ))}
+            )}
 
-          {activePage === 'tecnicos' && (
-            <TechniciansPage
-              profiles={profiles}
-              clients={clients}
-              currentUserId={profile.id}
-              loading={profilesLoading}
-              error={profilesError}
-              editProfile={editProfile}
-              editRole={editRole}
-              editClientId={editClientId}
-              editLoading={editLoading}
-              editMessage={editMessage}
-              onEditProfile={openEditProfile}
-              onCloseEdit={closeEditProfile}
-              onEditRoleChange={setEditRole}
-              onEditClientChange={setEditClientId}
-              onSaveProfile={handleSaveProfile}
-              newUserOpen={newUserOpen}
-              newUserEmail={newUserEmail}
-              newUserPassword={newUserPassword}
-              newUserName={newUserName}
-              newUserRole={newUserRole}
-              newUserClientId={newUserClientId}
-              newUserLoading={newUserLoading}
-              newUserMessage={newUserMessage}
-              onOpenNewUser={() => {
-                setNewUserOpen(true)
-                setNewUserMessage('')
-              }}
-              onCloseNewUser={() => setNewUserOpen(false)}
-              onNewUserEmailChange={setNewUserEmail}
-              onNewUserPasswordChange={setNewUserPassword}
-              onNewUserNameChange={setNewUserName}
-              onNewUserRoleChange={setNewUserRole}
-              onNewUserClientChange={setNewUserClientId}
-              onCreateUser={handleCreateUser}
-            />
-          )}
+            {activePage === 'clientes' &&
+              (viewingClient ? (
+                <SitesPage
+                  client={viewingClient}
+                  sites={sites}
+                  loading={sitesLoading}
+                  error={sitesError}
+                  modalOpen={newSiteOpen}
+                  newSiteName={newSiteName}
+                  newSiteAddress={newSiteAddress}
+                  newSiteLoading={newSiteLoading}
+                  newSiteMessage={newSiteMessage}
+                  onBack={backToClients}
+                  onOpenModal={openNewSiteModal}
+                  onCloseModal={closeNewSiteModal}
+                  onNewSiteNameChange={setNewSiteName}
+                  onNewSiteAddressChange={setNewSiteAddress}
+                  onCreateSite={handleCreateSite}
+                />
+              ) : (
+                <ClientsPage
+                  clients={clients}
+                  loading={clientsLoading}
+                  error={clientsError}
+                  modalOpen={newClientOpen}
+                  newClientName={newClientName}
+                  newClientLoading={newClientLoading}
+                  newClientMessage={newClientMessage}
+                  onOpenModal={() => openNewClientModal()}
+                  onCloseModal={closeNewClientModal}
+                  onNewClientNameChange={setNewClientName}
+                  onCreateClient={handleCreateClient}
+                  onCreateTestClient={handleCreateTestClient}
+                  onOpenClient={openClientSites}
+                />
+              ))}
 
-          {activePage === 'estoque' && (
-            <InventoryPage
-              parts={parts}
-              loading={partsLoading}
-              error={partsError}
-              modalOpen={newPartOpen}
-              newSku={newPartSku}
-              newName={newPartName}
-              newDescription={newPartDescription}
-              newMinStock={newPartMinStock}
-              newCurrentStock={newPartCurrentStock}
-              newLoading={newPartLoading}
-              newMessage={newPartMessage}
-              movementPartId={movementPartId}
-              movementType={movementType}
-              movementQty={movementQty}
-              movementNotes={movementNotes}
-              movementLoading={movementLoading}
-              movementMessage={movementMessage}
-              onOpenModal={() => {
-                setNewPartOpen(true)
-                setNewPartMessage('')
-              }}
-              onCloseModal={() => setNewPartOpen(false)}
-              onNewSkuChange={setNewPartSku}
-              onNewNameChange={setNewPartName}
-              onNewDescriptionChange={setNewPartDescription}
-              onNewMinStockChange={setNewPartMinStock}
-              onNewCurrentStockChange={setNewPartCurrentStock}
-              onCreatePart={handleCreatePart}
-              onMovementPartChange={setMovementPartId}
-              onMovementTypeChange={setMovementType}
-              onMovementQtyChange={setMovementQty}
-              onMovementNotesChange={setMovementNotes}
-              onRegisterMovement={handleRegisterMovement}
-              onReload={() => void loadParts()}
-            />
-          )}
+            {activePage === 'chamados' &&
+              (viewingTicket ? (
+                <TicketDetailPage
+                  ticket={viewingTicket}
+                  clients={clients}
+                  profiles={profiles}
+                  siteName={viewingTicketSiteName}
+                  equipmentLabel={viewingTicketEquipmentLabel}
+                  events={ticketEvents}
+                  eventsLoading={ticketEventsLoading}
+                  attachments={ticketAttachments}
+                  attachmentsLoading={ticketAttachmentsLoading}
+                  canUpload
+                  uploading={attachmentUploadLoading}
+                  uploadError={attachmentUploadError}
+                  onUpload={handleUploadAttachment}
+                  editStatus={editTicketStatus}
+                  editPriority={editTicketPriority}
+                  editTechnicianId={editTicketTechnicianId}
+                  editLoading={editTicketLoading}
+                  editMessage={editTicketMessage}
+                  inspection={ticketInspection}
+                  inspectionLoading={ticketInspectionLoading}
+                  approval={ticketApproval}
+                  approvalLoading={ticketApprovalLoading}
+                  onBack={backToTicketsList}
+                  onEditStatusChange={setEditTicketStatus}
+                  onEditPriorityChange={setEditTicketPriority}
+                  onEditTechnicianChange={setEditTicketTechnicianId}
+                  onSave={handleUpdateTicket}
+                />
+              ) : (
+                <TicketsPage
+                  tickets={tickets}
+                  clients={clients}
+                  loading={ticketsLoading}
+                  error={ticketsError}
+                  statusFilter={ticketStatusFilter}
+                  modalOpen={newTicketOpen}
+                  newClientId={newTicketClientId}
+                  newSiteId={newTicketSiteId}
+                  newEquipmentId={newTicketEquipmentId}
+                  newTitle={newTicketTitle}
+                  newDescription={newTicketDescription}
+                  newPriority={newTicketPriority}
+                  newLoading={newTicketLoading}
+                  newMessage={newTicketMessage}
+                  formSites={ticketFormSites}
+                  formEquipment={ticketFormEquipment}
+                  onSelectStatusFilter={(status) =>
+                    void selectTicketStatusFilter(status)
+                  }
+                  onOpenModal={openNewTicketModal}
+                  onCloseModal={closeNewTicketModal}
+                  onSelectClient={(clientId) =>
+                    void selectNewTicketClient(clientId)
+                  }
+                  onNewSiteChange={setNewTicketSiteId}
+                  onNewEquipmentChange={setNewTicketEquipmentId}
+                  onNewTitleChange={setNewTicketTitle}
+                  onNewDescriptionChange={setNewTicketDescription}
+                  onNewPriorityChange={setNewTicketPriority}
+                  onCreateTicket={handleCreateTicket}
+                  onOpenTicket={openTicketDetail}
+                />
+              ))}
 
-          {activePage === 'checklist' && (
-            <ChecklistPage
-              templates={checklistTemplates}
-              runs={checklistRuns}
-              equipment={equipmentFleet}
-              loading={checklistLoading}
-              error={checklistError}
-              selectedTemplateId={checklistTemplateId}
-              selectedEquipmentId={checklistEquipmentId}
-              notes={checklistNotes}
-              startLoading={checklistStartLoading}
-              startMessage={checklistStartMessage}
-              isGestor={profile.role === 'gestor_adm'}
-              onTemplateChange={setChecklistTemplateId}
-              onEquipmentChange={setChecklistEquipmentId}
-              onNotesChange={setChecklistNotes}
-              onStartRun={handleStartChecklist}
-              onReload={() => void loadChecklistData()}
-            />
-          )}
+            {activePage === 'tecnicos' && (
+              <TechniciansPage
+                profiles={profiles}
+                clients={clients}
+                currentUserId={profile.id}
+                loading={profilesLoading}
+                error={profilesError}
+                editProfile={editProfile}
+                editRole={editRole}
+                editClientId={editClientId}
+                editLoading={editLoading}
+                editMessage={editMessage}
+                onEditProfile={openEditProfile}
+                onCloseEdit={closeEditProfile}
+                onEditRoleChange={setEditRole}
+                onEditClientChange={setEditClientId}
+                onSaveProfile={handleSaveProfile}
+                newUserOpen={newUserOpen}
+                newUserEmail={newUserEmail}
+                newUserPassword={newUserPassword}
+                newUserName={newUserName}
+                newUserRole={newUserRole}
+                newUserClientId={newUserClientId}
+                newUserLoading={newUserLoading}
+                newUserMessage={newUserMessage}
+                onOpenNewUser={() => {
+                  setNewUserOpen(true)
+                  setNewUserMessage('')
+                }}
+                onCloseNewUser={() => setNewUserOpen(false)}
+                onNewUserEmailChange={setNewUserEmail}
+                onNewUserPasswordChange={setNewUserPassword}
+                onNewUserNameChange={setNewUserName}
+                onNewUserRoleChange={setNewUserRole}
+                onNewUserClientChange={setNewUserClientId}
+                onCreateUser={handleCreateUser}
+              />
+            )}
 
-          {activePage === 'relatorios' && (
-            <ReportsPage tickets={tickets} parts={parts} />
-          )}
+            {activePage === 'estoque' && (
+              <InventoryPage
+                parts={parts}
+                loading={partsLoading}
+                error={partsError}
+                modalOpen={newPartOpen}
+                newSku={newPartSku}
+                newName={newPartName}
+                newDescription={newPartDescription}
+                newMinStock={newPartMinStock}
+                newCurrentStock={newPartCurrentStock}
+                newLoading={newPartLoading}
+                newMessage={newPartMessage}
+                movementPartId={movementPartId}
+                movementType={movementType}
+                movementQty={movementQty}
+                movementNotes={movementNotes}
+                movementLoading={movementLoading}
+                movementMessage={movementMessage}
+                onOpenModal={() => {
+                  setNewPartOpen(true)
+                  setNewPartMessage('')
+                }}
+                onCloseModal={() => setNewPartOpen(false)}
+                onNewSkuChange={setNewPartSku}
+                onNewNameChange={setNewPartName}
+                onNewDescriptionChange={setNewPartDescription}
+                onNewMinStockChange={setNewPartMinStock}
+                onNewCurrentStockChange={setNewPartCurrentStock}
+                onCreatePart={handleCreatePart}
+                onMovementPartChange={setMovementPartId}
+                onMovementTypeChange={setMovementType}
+                onMovementQtyChange={setMovementQty}
+                onMovementNotesChange={setMovementNotes}
+                onRegisterMovement={handleRegisterMovement}
+                onReload={() => void loadParts()}
+              />
+            )}
 
-          {activePage === 'equipamentos' && (
-            <EquipmentPage
-              clients={clients}
-              sites={
-                allocateModalOpen ? allocateSites : equipmentFilterSites
-              }
-              fleet={filterFleet(
-                equipmentFleet,
-                equipmentFilterClientId,
-                equipmentFilterSiteId,
-              )}
-              filterClientId={equipmentFilterClientId}
-              filterSiteId={equipmentFilterSiteId}
-              loading={equipmentLoading}
-              error={equipmentError}
-              newModalOpen={newEquipmentOpen}
-              newAssetTag={newEquipmentAssetTag}
-              newDescription={newEquipmentDescription}
-              newSerial={newEquipmentSerial}
-              newLoading={newEquipmentLoading}
-              newMessage={newEquipmentMessage}
-              allocateModalOpen={allocateModalOpen}
-              allocateEquipment={allocateEquipment}
-              allocateClientId={allocateClientId}
-              allocateSiteId={allocateSiteId}
-              allocateLoading={allocateLoading}
-              allocateMessage={allocateMessage}
-              onFilterClientChange={(clientId) =>
-                void selectEquipmentFilterClient(clientId)
-              }
-              onFilterSiteChange={selectEquipmentFilterSite}
-              onOpenNewModal={openNewEquipmentModal}
-              onCloseNewModal={closeNewEquipmentModal}
-              onNewAssetTagChange={setNewEquipmentAssetTag}
-              onNewDescriptionChange={setNewEquipmentDescription}
-              onNewSerialChange={setNewEquipmentSerial}
-              onCreateEquipment={handleCreateEquipment}
-              onOpenAllocateModal={openAllocateModal}
-              onCloseAllocateModal={closeAllocateModal}
-              onAllocateClientChange={(clientId) =>
-                void selectAllocateClient(clientId)
-              }
-              onAllocateSiteChange={setAllocateSiteId}
-              onCreateAllocation={handleCreateAllocation}
-              onEndAllocation={(allocationId) =>
-                void handleEndAllocation(allocationId)
-              }
-            />
-          )}
+            {activePage === 'checklist' && (
+              <ChecklistPage
+                templates={checklistTemplates}
+                runs={checklistRuns}
+                equipment={equipmentFleet}
+                loading={checklistLoading}
+                error={checklistError}
+                selectedTemplateId={checklistTemplateId}
+                selectedEquipmentId={checklistEquipmentId}
+                notes={checklistNotes}
+                startLoading={checklistStartLoading}
+                startMessage={checklistStartMessage}
+                isGestor={profile.role === 'gestor_adm'}
+                onTemplateChange={setChecklistTemplateId}
+                onEquipmentChange={setChecklistEquipmentId}
+                onNotesChange={setChecklistNotes}
+                onStartRun={handleStartChecklist}
+                onReload={() => void loadChecklistData()}
+              />
+            )}
+
+            {activePage === 'relatorios' && (
+              <ReportsPage
+                tickets={tickets}
+                parts={parts}
+                events={dashboardEvents}
+                profiles={profiles}
+                clients={clients}
+                siteLabels={dashboardSiteLabels}
+                equipmentLabels={dashboardEquipmentLabels}
+                approvals={reportApprovals}
+                checklistRuns={reportChecklistRuns}
+                checklistTemplates={checklistTemplates}
+                partMovements={reportPartMovements}
+                loading={
+                  ticketsLoading || partsLoading || dashboardLoading || reportsLoading
+                }
+                error={ticketsError || partsError || reportsError}
+              />
+            )}
+
+            {activePage === 'equipamentos' && (
+              <EquipmentPage
+                clients={clients}
+                sites={
+                  allocateModalOpen ? allocateSites : equipmentFilterSites
+                }
+                fleet={filterFleet(
+                  equipmentFleet,
+                  equipmentFilterClientId,
+                  equipmentFilterSiteId,
+                )}
+                filterClientId={equipmentFilterClientId}
+                filterSiteId={equipmentFilterSiteId}
+                loading={equipmentLoading}
+                error={equipmentError}
+                newModalOpen={newEquipmentOpen}
+                newAssetTag={newEquipmentAssetTag}
+                newDescription={newEquipmentDescription}
+                newSerial={newEquipmentSerial}
+                newLoading={newEquipmentLoading}
+                newMessage={newEquipmentMessage}
+                allocateModalOpen={allocateModalOpen}
+                allocateEquipment={allocateEquipment}
+                allocateClientId={allocateClientId}
+                allocateSiteId={allocateSiteId}
+                allocateLoading={allocateLoading}
+                allocateMessage={allocateMessage}
+                onFilterClientChange={(clientId) =>
+                  void selectEquipmentFilterClient(clientId)
+                }
+                onFilterSiteChange={selectEquipmentFilterSite}
+                onOpenNewModal={openNewEquipmentModal}
+                onCloseNewModal={closeNewEquipmentModal}
+                onNewAssetTagChange={setNewEquipmentAssetTag}
+                onNewDescriptionChange={setNewEquipmentDescription}
+                onNewSerialChange={setNewEquipmentSerial}
+                onCreateEquipment={handleCreateEquipment}
+                onOpenAllocateModal={openAllocateModal}
+                onCloseAllocateModal={closeAllocateModal}
+                onAllocateClientChange={(clientId) =>
+                  void selectAllocateClient(clientId)
+                }
+                onAllocateSiteChange={setAllocateSiteId}
+                onCreateAllocation={handleCreateAllocation}
+                onEndAllocation={(allocationId) =>
+                  void handleEndAllocation(allocationId)
+                }
+              />
+            )}
+          </Suspense>
         </div>
       </section>
     </main>

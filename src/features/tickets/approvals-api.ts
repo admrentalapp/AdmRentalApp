@@ -4,6 +4,13 @@ import type { TicketApproval, TicketApprovalDecision } from '@/types'
 const APPROVAL_COLUMNS =
   'id, ticket_id, decision, notes, responded_by, responded_at'
 
+export async function fetchTicketApprovals() {
+  return supabase
+    .from('ticket_approvals')
+    .select(APPROVAL_COLUMNS)
+    .order('responded_at', { ascending: false })
+}
+
 export async function fetchTicketApproval(ticketId: string) {
   return supabase
     .from('ticket_approvals')
@@ -14,6 +21,10 @@ export async function fetchTicketApproval(ticketId: string) {
 
 export function parseTicketApproval(data: unknown) {
   return (data ?? null) as TicketApproval | null
+}
+
+export function parseTicketApprovals(data: unknown) {
+  return (data ?? []) as TicketApproval[]
 }
 
 export async function respondTicketApproval(

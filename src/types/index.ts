@@ -186,6 +186,17 @@ export type Part = {
   updated_at: string
 }
 
+export type PartMovement = {
+  id: string
+  part_id: string
+  movement_type: 'entrada' | 'saida' | 'ajuste'
+  quantity: number
+  notes: string | null
+  ticket_id: string | null
+  created_by: string
+  created_at: string
+}
+
 export type ChecklistTemplate = {
   id: string
   name: string
