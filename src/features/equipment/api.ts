@@ -173,6 +173,33 @@ export async function createFleetEquipment(input: {
     .single()
 }
 
+export async function updateFleetEquipment(input: {
+  equipmentId: string
+  assetTag: string
+  description: string
+  serialNumber: string | null
+}) {
+  return supabase
+    .from('equipment')
+    .update({
+      asset_tag: input.assetTag,
+      description: input.description,
+      serial_number: input.serialNumber,
+    })
+    .eq('id', input.equipmentId)
+    .select(EQUIPMENT_COLUMNS)
+    .single()
+}
+
+export async function deactivateFleetEquipment(equipmentId: string) {
+  return supabase
+    .from('equipment')
+    .update({ active: false })
+    .eq('id', equipmentId)
+    .select(EQUIPMENT_COLUMNS)
+    .single()
+}
+
 export async function createEquipmentAllocation(input: {
   equipmentId: string
   clientId: string

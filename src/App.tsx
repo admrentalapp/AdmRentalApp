@@ -1,5 +1,5 @@
 import { Suspense, lazy, useCallback, useEffect, useState, type FormEvent } from 'react'
-import { AlertTriangle, Bell, ClipboardList, LogOut, Menu, Plus, Trash2, X } from 'lucide-react'
+import { AlertTriangle, ClipboardList, LogOut, Menu, Plus, Trash2, X } from 'lucide-react'
 import { AppLogo } from '@/components/shared/app-logo'
 import { ThemeToggle } from '@/components/theme/theme-toggle'
 import type { InspectionFormValues } from '@/components/tickets/inspection-section'
@@ -8,12 +8,14 @@ import { managerMenuItems } from '@/config/menu'
 import {
   createEquipmentAllocation,
   createFleetEquipment,
+  deactivateFleetEquipment,
   endEquipmentAllocation,
   fetchAllocatedEquipmentForClient,
   fetchClientAllocatedFleet,
   fetchFleetData,
   filterFleet,
   mergeEquipmentWithAllocations,
+  updateFleetEquipment,
 } from '@/features/equipment/api'
 import {
   deleteClientTicket,
@@ -44,11 +46,13 @@ import {
 } from '@/features/checklists/api'
 import {
   createPart,
+  deactivatePart,
   fetchParts,
   fetchPartMovements,
   parseParts,
   parsePartMovements,
   registerPartMovement,
+  updatePart,
 } from '@/features/inventory/api'
 import { createManagedUser } from '@/features/users/api'
 import {
@@ -200,6 +204,15 @@ export default function App() {
   const [newClientName, setNewClientName] = useState('')
   const [newClientLoading, setNewClientLoading] = useState(false)
   const [newClientMessage, setNewClientMessage] = useState('')
+  const [editClientTarget, setEditClientTarget] = useState<Client | null>(null)
+  const [editClientName, setEditClientName] = useState('')
+  const [editClientLoading, setEditClientLoading] = useState(false)
+  const [editClientMessage, setEditClientMessage] = useState('')
+  const [deactivateClientTarget, setDeactivateClientTarget] = useState<Client | null>(
+    null,
+  )
+  const [deactivateClientLoading, setDeactivateClientLoading] = useState(false)
+  const [deactivateClientMessage, setDeactivateClientMessage] = useState('')
 
   const [viewingClient, setViewingClient] = useState<Client | null>(null)
   const [sites, setSites] = useState<Site[]>([])
@@ -237,6 +250,16 @@ export default function App() {
   const [newEquipmentSerial, setNewEquipmentSerial] = useState('')
   const [newEquipmentLoading, setNewEquipmentLoading] = useState(false)
   const [newEquipmentMessage, setNewEquipmentMessage] = useState('')
+  const [editEquipment, setEditEquipment] = useState<EquipmentWithAllocation | null>(null)
+  const [editEquipmentAssetTag, setEditEquipmentAssetTag] = useState('')
+  const [editEquipmentDescription, setEditEquipmentDescription] = useState('')
+  const [editEquipmentSerial, setEditEquipmentSerial] = useState('')
+  const [editEquipmentLoading, setEditEquipmentLoading] = useState(false)
+  const [editEquipmentMessage, setEditEquipmentMessage] = useState('')
+  const [deactivateEquipment, setDeactivateEquipment] =
+    useState<EquipmentWithAllocation | null>(null)
+  const [deactivateEquipmentLoading, setDeactivateEquipmentLoading] = useState(false)
+  const [deactivateEquipmentMessage, setDeactivateEquipmentMessage] = useState('')
 
   const [allocateModalOpen, setAllocateModalOpen] = useState(false)
   const [allocateEquipment, setAllocateEquipment] =
@@ -338,6 +361,17 @@ export default function App() {
   const [newPartCurrentStock, setNewPartCurrentStock] = useState('0')
   const [newPartLoading, setNewPartLoading] = useState(false)
   const [newPartMessage, setNewPartMessage] = useState('')
+  const [editPart, setEditPart] = useState<Part | null>(null)
+  const [editPartSku, setEditPartSku] = useState('')
+  const [editPartName, setEditPartName] = useState('')
+  const [editPartDescription, setEditPartDescription] = useState('')
+  const [editPartMinStock, setEditPartMinStock] = useState('0')
+  const [editPartCurrentStock, setEditPartCurrentStock] = useState('0')
+  const [editPartLoading, setEditPartLoading] = useState(false)
+  const [editPartMessage, setEditPartMessage] = useState('')
+  const [deactivatePartTarget, setDeactivatePartTarget] = useState<Part | null>(null)
+  const [deactivatePartLoading, setDeactivatePartLoading] = useState(false)
+  const [deactivatePartMessage, setDeactivatePartMessage] = useState('')
   const [movementPartId, setMovementPartId] = useState('')
   const [movementType, setMovementType] = useState<'entrada' | 'saida' | 'ajuste'>(
     'entrada',
@@ -904,6 +938,95 @@ export default function App() {
     setNewClientOpen(false)
   }
 
+  function openEditClientModal(client: Client) {
+    setEditClientTarget(client)
+    setEditClientName(client.name)
+    setEditClientMessage('')
+  }
+
+  function closeEditClientModal() {
+    setEditClientTarget(null)
+    setEditClientName('')
+    setEditClientMessage('')
+  }
+
+  async function handleUpdateClient(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+
+    if (!editClientTarget) return
+
+    const trimmedName = editClientName.trim()
+
+    if (trimmedName.length < 2) {
+      setEditClientMessage('Digite um nome com pelo menos 2 caracteres.')
+      return
+    }
+
+    setEditClientLoading(true)
+    setEditClientMessage('')
+
+    const { error } = await supabase
+      .from('clients')
+      .update({ name: trimmedName })
+      .eq('id', editClientTarget.id)
+
+    setEditClientLoading(false)
+
+    if (error) {
+      setEditClientMessage(
+        error.message ||
+          'Não foi possível atualizar o cliente. Verifique as policies do Supabase.',
+      )
+      return
+    }
+
+    if (viewingClient?.id === editClientTarget.id) {
+      setViewingClient({ ...viewingClient, name: trimmedName })
+    }
+
+    closeEditClientModal()
+    await loadClients()
+  }
+
+  function openDeactivateClientModal(client: Client) {
+    setDeactivateClientTarget(client)
+    setDeactivateClientMessage('')
+  }
+
+  function closeDeactivateClientModal() {
+    setDeactivateClientTarget(null)
+    setDeactivateClientMessage('')
+  }
+
+  async function handleDeactivateClient() {
+    if (!deactivateClientTarget) return
+
+    setDeactivateClientLoading(true)
+    setDeactivateClientMessage('')
+
+    const { error } = await supabase
+      .from('clients')
+      .update({ active: false })
+      .eq('id', deactivateClientTarget.id)
+
+    setDeactivateClientLoading(false)
+
+    if (error) {
+      setDeactivateClientMessage(
+        error.message ||
+          'Não foi possível inativar o cliente. Verifique as policies do Supabase.',
+      )
+      return
+    }
+
+    if (viewingClient?.id === deactivateClientTarget.id) {
+      backToClients()
+    }
+
+    closeDeactivateClientModal()
+    await loadClients()
+  }
+
   function openClientSites(client: Client) {
     setViewingClient(client)
     setNewSiteOpen(false)
@@ -1037,6 +1160,13 @@ export default function App() {
     setNewEquipmentDescription('')
     setNewEquipmentSerial('')
     setNewEquipmentMessage('')
+    setEditEquipment(null)
+    setEditEquipmentAssetTag('')
+    setEditEquipmentDescription('')
+    setEditEquipmentSerial('')
+    setEditEquipmentMessage('')
+    setDeactivateEquipment(null)
+    setDeactivateEquipmentMessage('')
     setAllocateModalOpen(false)
     setAllocateEquipment(null)
     setAllocateClientId('')
@@ -1079,6 +1209,22 @@ export default function App() {
     setNewEquipmentOpen(false)
   }
 
+  function openEditEquipmentModal(item: EquipmentWithAllocation) {
+    setEditEquipment(item)
+    setEditEquipmentAssetTag(item.asset_tag)
+    setEditEquipmentDescription(item.description)
+    setEditEquipmentSerial(item.serial_number ?? '')
+    setEditEquipmentMessage('')
+  }
+
+  function closeEditEquipmentModal() {
+    setEditEquipment(null)
+    setEditEquipmentAssetTag('')
+    setEditEquipmentDescription('')
+    setEditEquipmentSerial('')
+    setEditEquipmentMessage('')
+  }
+
   async function handleCreateEquipment(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
@@ -1116,6 +1262,88 @@ export default function App() {
     }
 
     closeNewEquipmentModal()
+    await loadFleet()
+  }
+
+  async function handleUpdateEquipment(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+
+    if (!editEquipment) return
+
+    const assetTag = editEquipmentAssetTag.trim()
+    const description = editEquipmentDescription.trim()
+    const serialNumber = editEquipmentSerial.trim()
+
+    if (assetTag.length < 2) {
+      setEditEquipmentMessage('Digite uma tag/patrimônio com pelo menos 2 caracteres.')
+      return
+    }
+
+    if (description.length < 3) {
+      setEditEquipmentMessage('Digite uma descrição com pelo menos 3 caracteres.')
+      return
+    }
+
+    setEditEquipmentLoading(true)
+    setEditEquipmentMessage('')
+
+    const { error } = await updateFleetEquipment({
+      equipmentId: editEquipment.id,
+      assetTag,
+      description,
+      serialNumber: serialNumber.length > 0 ? serialNumber : null,
+    })
+
+    setEditEquipmentLoading(false)
+
+    if (error) {
+      setEditEquipmentMessage(
+        error.message ||
+          'Não foi possível atualizar o equipamento. Verifique as policies do Supabase.',
+      )
+      return
+    }
+
+    closeEditEquipmentModal()
+    await loadFleet()
+  }
+
+  function openDeactivateEquipmentModal(item: EquipmentWithAllocation) {
+    setDeactivateEquipment(item)
+    setDeactivateEquipmentMessage('')
+  }
+
+  function closeDeactivateEquipmentModal() {
+    setDeactivateEquipment(null)
+    setDeactivateEquipmentMessage('')
+  }
+
+  async function handleDeactivateEquipment() {
+    if (!deactivateEquipment) return
+
+    if (deactivateEquipment.allocation) {
+      setDeactivateEquipmentMessage(
+        'Encerre a locação ativa antes de apagar este equipamento da lista.',
+      )
+      return
+    }
+
+    setDeactivateEquipmentLoading(true)
+    setDeactivateEquipmentMessage('')
+
+    const { error } = await deactivateFleetEquipment(deactivateEquipment.id)
+
+    setDeactivateEquipmentLoading(false)
+
+    if (error) {
+      setDeactivateEquipmentMessage(
+        error.message ||
+          'Não foi possível inativar o equipamento. Verifique as policies do Supabase.',
+      )
+      return
+    }
+
+    closeDeactivateEquipmentModal()
     await loadFleet()
   }
 
@@ -1750,6 +1978,111 @@ export default function App() {
     setNewPartDescription('')
     setNewPartMinStock('0')
     setNewPartCurrentStock('0')
+    await loadParts()
+  }
+
+  function openEditPartModal(part: Part) {
+    setEditPart(part)
+    setEditPartSku(part.sku)
+    setEditPartName(part.name)
+    setEditPartDescription(part.description ?? '')
+    setEditPartMinStock(String(part.min_stock))
+    setEditPartCurrentStock(String(part.current_stock))
+    setEditPartMessage('')
+  }
+
+  function closeEditPartModal() {
+    setEditPart(null)
+    setEditPartSku('')
+    setEditPartName('')
+    setEditPartDescription('')
+    setEditPartMinStock('0')
+    setEditPartCurrentStock('0')
+    setEditPartMessage('')
+  }
+
+  async function handleUpdatePart(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+
+    if (!editPart) return
+
+    const sku = editPartSku.trim()
+    const name = editPartName.trim()
+    const description = editPartDescription.trim()
+    const minStock = Number(editPartMinStock)
+    const currentStock = Number(editPartCurrentStock)
+
+    if (sku.length < 2) {
+      setEditPartMessage('Digite uma tag/patrimônio com pelo menos 2 caracteres.')
+      return
+    }
+
+    if (name.length < 3) {
+      setEditPartMessage('Digite um nome com pelo menos 3 caracteres.')
+      return
+    }
+
+    if (!Number.isFinite(minStock) || minStock < 0) {
+      setEditPartMessage('Informe um estoque mínimo válido.')
+      return
+    }
+
+    if (!Number.isFinite(currentStock) || currentStock < 0) {
+      setEditPartMessage('Informe um estoque atual válido.')
+      return
+    }
+
+    setEditPartLoading(true)
+    setEditPartMessage('')
+
+    const { error } = await updatePart({
+      partId: editPart.id,
+      sku,
+      name,
+      description: description || null,
+      minStock,
+      currentStock,
+    })
+
+    setEditPartLoading(false)
+
+    if (error) {
+      setEditPartMessage(error.message || 'Não foi possível atualizar a peça.')
+      return
+    }
+
+    closeEditPartModal()
+    setNewPartMessage('Peça atualizada com sucesso.')
+    await loadParts()
+  }
+
+  function openDeactivatePartModal(part: Part) {
+    setDeactivatePartTarget(part)
+    setDeactivatePartMessage('')
+  }
+
+  function closeDeactivatePartModal() {
+    setDeactivatePartTarget(null)
+    setDeactivatePartMessage('')
+  }
+
+  async function handleDeactivatePart() {
+    if (!deactivatePartTarget) return
+
+    setDeactivatePartLoading(true)
+    setDeactivatePartMessage('')
+
+    const { error } = await deactivatePart(deactivatePartTarget.id)
+
+    setDeactivatePartLoading(false)
+
+    if (error) {
+      setDeactivatePartMessage(error.message || 'Não foi possível inativar a peça.')
+      return
+    }
+
+    closeDeactivatePartModal()
+    setNewPartMessage('Peça removida da lista com sucesso.')
     await loadParts()
   }
 
@@ -2553,13 +2886,6 @@ export default function App() {
 
           <div className="flex items-center gap-1">
             <ThemeToggle />
-            <button
-              type="button"
-              className="relative rounded-lg p-2 text-muted-foreground hover:bg-accent hover:text-foreground"
-            >
-              <Bell size={21} />
-              <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-red-500" />
-            </button>
           </div>
         </header>
 
@@ -2605,12 +2931,26 @@ export default function App() {
                   newClientName={newClientName}
                   newClientLoading={newClientLoading}
                   newClientMessage={newClientMessage}
+                  editClient={editClientTarget}
+                  editClientName={editClientName}
+                  editClientLoading={editClientLoading}
+                  editClientMessage={editClientMessage}
+                  deactivateClient={deactivateClientTarget}
+                  deactivateClientLoading={deactivateClientLoading}
+                  deactivateClientMessage={deactivateClientMessage}
                   onOpenModal={() => openNewClientModal()}
                   onCloseModal={closeNewClientModal}
                   onNewClientNameChange={setNewClientName}
                   onCreateClient={handleCreateClient}
                   onCreateTestClient={handleCreateTestClient}
                   onOpenClient={openClientSites}
+                  onOpenEditClient={openEditClientModal}
+                  onCloseEditClient={closeEditClientModal}
+                  onEditClientNameChange={setEditClientName}
+                  onUpdateClient={handleUpdateClient}
+                  onOpenDeactivateClient={openDeactivateClientModal}
+                  onCloseDeactivateClient={closeDeactivateClientModal}
+                  onDeactivateClient={() => void handleDeactivateClient()}
                 />
               ))}
 
@@ -2733,6 +3073,17 @@ export default function App() {
                 newCurrentStock={newPartCurrentStock}
                 newLoading={newPartLoading}
                 newMessage={newPartMessage}
+                editPart={editPart}
+                editSku={editPartSku}
+                editName={editPartName}
+                editDescription={editPartDescription}
+                editMinStock={editPartMinStock}
+                editCurrentStock={editPartCurrentStock}
+                editLoading={editPartLoading}
+                editMessage={editPartMessage}
+                deactivatePart={deactivatePartTarget}
+                deactivateLoading={deactivatePartLoading}
+                deactivateMessage={deactivatePartMessage}
                 movementPartId={movementPartId}
                 movementType={movementType}
                 movementQty={movementQty}
@@ -2750,6 +3101,17 @@ export default function App() {
                 onNewMinStockChange={setNewPartMinStock}
                 onNewCurrentStockChange={setNewPartCurrentStock}
                 onCreatePart={handleCreatePart}
+                onOpenEditModal={openEditPartModal}
+                onCloseEditModal={closeEditPartModal}
+                onEditSkuChange={setEditPartSku}
+                onEditNameChange={setEditPartName}
+                onEditDescriptionChange={setEditPartDescription}
+                onEditMinStockChange={setEditPartMinStock}
+                onEditCurrentStockChange={setEditPartCurrentStock}
+                onUpdatePart={handleUpdatePart}
+                onOpenDeactivateModal={openDeactivatePartModal}
+                onCloseDeactivateModal={closeDeactivatePartModal}
+                onDeactivatePart={() => void handleDeactivatePart()}
                 onMovementPartChange={setMovementPartId}
                 onMovementTypeChange={setMovementType}
                 onMovementQtyChange={setMovementQty}
@@ -2821,6 +3183,15 @@ export default function App() {
                 newSerial={newEquipmentSerial}
                 newLoading={newEquipmentLoading}
                 newMessage={newEquipmentMessage}
+                editEquipment={editEquipment}
+                editAssetTag={editEquipmentAssetTag}
+                editDescription={editEquipmentDescription}
+                editSerial={editEquipmentSerial}
+                editLoading={editEquipmentLoading}
+                editMessage={editEquipmentMessage}
+                deactivateEquipment={deactivateEquipment}
+                deactivateLoading={deactivateEquipmentLoading}
+                deactivateMessage={deactivateEquipmentMessage}
                 allocateModalOpen={allocateModalOpen}
                 allocateEquipment={allocateEquipment}
                 allocateClientId={allocateClientId}
@@ -2837,6 +3208,15 @@ export default function App() {
                 onNewDescriptionChange={setNewEquipmentDescription}
                 onNewSerialChange={setNewEquipmentSerial}
                 onCreateEquipment={handleCreateEquipment}
+                onOpenEditModal={openEditEquipmentModal}
+                onCloseEditModal={closeEditEquipmentModal}
+                onEditAssetTagChange={setEditEquipmentAssetTag}
+                onEditDescriptionChange={setEditEquipmentDescription}
+                onEditSerialChange={setEditEquipmentSerial}
+                onUpdateEquipment={handleUpdateEquipment}
+                onOpenDeactivateModal={openDeactivateEquipmentModal}
+                onCloseDeactivateModal={closeDeactivateEquipmentModal}
+                onDeactivateEquipment={() => void handleDeactivateEquipment()}
                 onOpenAllocateModal={openAllocateModal}
                 onCloseAllocateModal={closeAllocateModal}
                 onAllocateClientChange={(clientId) =>

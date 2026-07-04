@@ -37,6 +37,41 @@ export async function createPart(input: {
     .single()
 }
 
+export async function updatePart(input: {
+  partId: string
+  sku: string
+  name: string
+  description: string | null
+  minStock: number
+  currentStock: number
+}) {
+  return supabase
+    .from('parts')
+    .update({
+      sku: input.sku,
+      name: input.name,
+      description: input.description,
+      min_stock: input.minStock,
+      current_stock: input.currentStock,
+    })
+    .eq('id', input.partId)
+    .select(
+      'id, sku, name, description, unit, current_stock, min_stock, active, created_at, updated_at',
+    )
+    .single()
+}
+
+export async function deactivatePart(partId: string) {
+  return supabase
+    .from('parts')
+    .update({ active: false })
+    .eq('id', partId)
+    .select(
+      'id, sku, name, description, unit, current_stock, min_stock, active, created_at, updated_at',
+    )
+    .single()
+}
+
 export async function fetchPartMovements() {
   return supabase
     .from('part_movements')

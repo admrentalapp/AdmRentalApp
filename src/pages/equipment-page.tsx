@@ -1,5 +1,13 @@
 import { type FormEvent } from 'react'
-import { Link2, Plus, Wrench, X } from 'lucide-react'
+import {
+  AlertTriangle,
+  Link2,
+  PencilLine,
+  Plus,
+  Trash2,
+  Wrench,
+  X,
+} from 'lucide-react'
 import type { Client, EquipmentWithAllocation, Site } from '@/types'
 
 export function EquipmentPage({
@@ -16,6 +24,15 @@ export function EquipmentPage({
   newSerial,
   newLoading,
   newMessage,
+  editEquipment,
+  editAssetTag,
+  editDescription,
+  editSerial,
+  editLoading,
+  editMessage,
+  deactivateEquipment,
+  deactivateLoading,
+  deactivateMessage,
   allocateModalOpen,
   allocateEquipment,
   allocateClientId,
@@ -30,6 +47,15 @@ export function EquipmentPage({
   onNewDescriptionChange,
   onNewSerialChange,
   onCreateEquipment,
+  onOpenEditModal,
+  onCloseEditModal,
+  onEditAssetTagChange,
+  onEditDescriptionChange,
+  onEditSerialChange,
+  onUpdateEquipment,
+  onOpenDeactivateModal,
+  onCloseDeactivateModal,
+  onDeactivateEquipment,
   onOpenAllocateModal,
   onCloseAllocateModal,
   onAllocateClientChange,
@@ -50,6 +76,15 @@ export function EquipmentPage({
   newSerial: string
   newLoading: boolean
   newMessage: string
+  editEquipment: EquipmentWithAllocation | null
+  editAssetTag: string
+  editDescription: string
+  editSerial: string
+  editLoading: boolean
+  editMessage: string
+  deactivateEquipment: EquipmentWithAllocation | null
+  deactivateLoading: boolean
+  deactivateMessage: string
   allocateModalOpen: boolean
   allocateEquipment: EquipmentWithAllocation | null
   allocateClientId: string
@@ -64,6 +99,15 @@ export function EquipmentPage({
   onNewDescriptionChange: (value: string) => void
   onNewSerialChange: (value: string) => void
   onCreateEquipment: (event: FormEvent<HTMLFormElement>) => void
+  onOpenEditModal: (item: EquipmentWithAllocation) => void
+  onCloseEditModal: () => void
+  onEditAssetTagChange: (value: string) => void
+  onEditDescriptionChange: (value: string) => void
+  onEditSerialChange: (value: string) => void
+  onUpdateEquipment: (event: FormEvent<HTMLFormElement>) => void
+  onOpenDeactivateModal: (item: EquipmentWithAllocation) => void
+  onCloseDeactivateModal: () => void
+  onDeactivateEquipment: () => void
   onOpenAllocateModal: (item: EquipmentWithAllocation) => void
   onCloseAllocateModal: () => void
   onAllocateClientChange: (clientId: string) => void
@@ -73,6 +117,8 @@ export function EquipmentPage({
 }) {
   const filterClient = clients.find((item) => item.id === filterClientId)
   const allocateClient = clients.find((item) => item.id === allocateClientId)
+  const activeFleet = fleet.filter((item) => item.active)
+  const inactiveCount = fleet.length - activeFleet.length
 
   function clientName(clientId: string) {
     return clients.find((item) => item.id === clientId)?.name ?? 'Cliente'
@@ -91,8 +137,8 @@ export function EquipmentPage({
     )
   }
 
-  const availableCount = fleet.filter((item) => !item.allocation).length
-  const allocatedCount = fleet.filter((item) => item.allocation).length
+  const availableCount = activeFleet.filter((item) => !item.allocation).length
+  const allocatedCount = activeFleet.filter((item) => item.allocation).length
 
   return (
     <>
@@ -118,8 +164,8 @@ export function EquipmentPage({
 
       <section className="mt-6 grid gap-4 sm:grid-cols-3">
         <div className="rounded-2xl border border-border bg-card p-4">
-          <p className="text-sm text-muted-foreground">Total na frota</p>
-          <p className="mt-2 text-2xl font-bold">{fleet.length}</p>
+          <p className="text-sm text-muted-foreground">Total ativo na frota</p>
+          <p className="mt-2 text-2xl font-bold">{activeFleet.length}</p>
         </div>
         <div className="rounded-2xl border border-border bg-card p-4">
           <p className="text-sm text-muted-foreground">Em locação</p>
@@ -188,8 +234,13 @@ export function EquipmentPage({
               : 'Frota completa ADM'}
           </h4>
           <p className="mt-1 text-sm text-muted-foreground">
-            Total de registros: {fleet.length}
+            Equipamentos ativos: {activeFleet.length}
           </p>
+          {inactiveCount > 0 && (
+            <p className="mt-1 text-xs text-muted-foreground">
+              Inativos preservados no histórico: {inactiveCount}
+            </p>
+          )}
         </div>
 
         {loading && (
@@ -202,14 +253,14 @@ export function EquipmentPage({
           <div className="p-8 text-center text-sm text-red-600 dark:text-red-300">{error}</div>
         )}
 
-        {!loading && !error && fleet.length === 0 && (
+        {!loading && !error && activeFleet.length === 0 && (
           <div className="flex min-h-64 flex-col items-center justify-center gap-4 p-8 text-center">
             <Wrench className="text-muted-foreground" size={34} />
             <div>
               <p className="font-medium text-foreground">
                 {filterClientId
                   ? 'Nenhum equipamento alocado a este cliente.'
-                  : 'Nenhum equipamento cadastrado na frota.'}
+                  : 'Nenhum equipamento ativo cadastrado na frota.'}
               </p>
               <p className="mt-2 text-sm text-muted-foreground">
                 Cadastre equipamentos da ADM e aloque aos clientes em locação.
@@ -227,9 +278,9 @@ export function EquipmentPage({
           </div>
         )}
 
-        {!loading && !error && fleet.length > 0 && (
+        {!loading && !error && activeFleet.length > 0 && (
           <div className="divide-y divide-border">
-            {fleet.map((item) => (
+            {activeFleet.map((item) => (
               <div
                 key={item.id}
                 className="flex flex-col gap-3 px-6 py-5 lg:flex-row lg:items-center lg:justify-between"
@@ -267,15 +318,27 @@ export function EquipmentPage({
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2">
-                  <span
-                    className={`w-fit rounded-full px-3 py-1 text-xs font-semibold ${
-                      item.active
-                        ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400'
-                        : 'bg-muted text-muted-foreground'
-                    }`}
-                  >
-                    {item.active ? 'Ativo' : 'Inativo'}
+                  <span className="w-fit rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400">
+                    Ativo
                   </span>
+
+                  <button
+                    type="button"
+                    onClick={() => onOpenEditModal(item)}
+                    className="flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-accent"
+                  >
+                    <PencilLine size={16} />
+                    Editar
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => onOpenDeactivateModal(item)}
+                    className="flex items-center gap-2 rounded-lg border border-red-200 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50 dark:border-red-950 dark:text-red-300 dark:hover:bg-red-950/30"
+                  >
+                    <Trash2 size={16} />
+                    Apagar
+                  </button>
 
                   {!item.allocation ? (
                     <button
@@ -405,6 +468,166 @@ export function EquipmentPage({
                 </button>
               </div>
             </form>
+          </section>
+        </div>
+      )}
+
+      {editEquipment && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/75 p-4 sm:p-5">
+          <section className="my-auto max-h-[calc(100svh-2rem)] w-full max-w-md overflow-y-auto rounded-2xl border border-border bg-card p-5 shadow-2xl sm:p-6">
+            <div className="flex items-start justify-between gap-3 sm:gap-4">
+              <div className="min-w-0">
+                <p className="text-sm text-muted-foreground">Editar patrimônio</p>
+                <h3 className="mt-1 text-xl font-bold">Atualizar equipamento</h3>
+              </div>
+
+              <button
+                type="button"
+                onClick={onCloseEditModal}
+                className="shrink-0 rounded-lg p-2 text-muted-foreground hover:bg-accent hover:text-foreground"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <form className="mt-6 space-y-5" onSubmit={onUpdateEquipment}>
+              <div>
+                <label
+                  htmlFor="editEquipmentAssetTag"
+                  className="mb-2 block text-sm font-medium text-foreground"
+                >
+                  Tag / patrimônio
+                </label>
+                <input
+                  id="editEquipmentAssetTag"
+                  type="text"
+                  required
+                  autoFocus
+                  value={editAssetTag}
+                  onChange={(event) => onEditAssetTagChange(event.target.value)}
+                  placeholder="Ex.: EQ-001"
+                  className="w-full rounded-lg border border-border bg-background px-4 py-3 text-foreground outline-none placeholder:text-muted-foreground focus:border-red-500"
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="editEquipmentDescription"
+                  className="mb-2 block text-sm font-medium text-foreground"
+                >
+                  Descrição
+                </label>
+                <input
+                  id="editEquipmentDescription"
+                  type="text"
+                  required
+                  value={editDescription}
+                  onChange={(event) => onEditDescriptionChange(event.target.value)}
+                  placeholder="Ex.: Gerador 150 kVA"
+                  className="w-full rounded-lg border border-border bg-background px-4 py-3 text-foreground outline-none placeholder:text-muted-foreground focus:border-red-500"
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="editEquipmentSerial"
+                  className="mb-2 block text-sm font-medium text-foreground"
+                >
+                  Número de série{' '}
+                  <span className="font-normal text-muted-foreground">(opcional)</span>
+                </label>
+                <input
+                  id="editEquipmentSerial"
+                  type="text"
+                  value={editSerial}
+                  onChange={(event) => onEditSerialChange(event.target.value)}
+                  placeholder="Ex.: SN123456789"
+                  className="w-full rounded-lg border border-border bg-background px-4 py-3 text-foreground outline-none placeholder:text-muted-foreground focus:border-red-500"
+                />
+              </div>
+
+              {editMessage && (
+                <p className="rounded-lg border border-red-300 bg-red-100 p-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200">
+                  {editMessage}
+                </p>
+              )}
+
+              <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+                <button
+                  type="button"
+                  onClick={onCloseEditModal}
+                  className="w-full rounded-lg border border-border px-4 py-3 text-sm font-medium text-foreground hover:bg-accent sm:w-auto"
+                >
+                  Cancelar
+                </button>
+
+                <button
+                  type="submit"
+                  disabled={editLoading}
+                  className="w-full rounded-lg bg-red-600 px-5 py-3 text-sm font-semibold text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+                >
+                  {editLoading ? 'Salvando...' : 'Salvar alterações'}
+                </button>
+              </div>
+            </form>
+          </section>
+        </div>
+      )}
+
+      {deactivateEquipment && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/75 p-4 sm:p-5">
+          <section className="my-auto w-full max-w-md overflow-hidden rounded-2xl border border-border bg-card shadow-2xl">
+            <div className="border-b border-border px-6 py-5">
+              <div className="flex items-start gap-4">
+                <div className="rounded-2xl bg-red-100 p-3 text-red-600 dark:bg-red-950/60 dark:text-red-400">
+                  <AlertTriangle size={22} />
+                </div>
+                <div>
+                  <h4 className="text-lg font-bold">Apagar equipamento da lista</h4>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    O equipamento será apenas inativado para preservar o histórico.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="px-6 py-5">
+              <p className="text-sm text-foreground">
+                Deseja inativar o equipamento{' '}
+                <span className="font-semibold">{deactivateEquipment.asset_tag}</span>?
+              </p>
+              <p className="mt-2 text-sm text-muted-foreground">
+                {deactivateEquipment.allocation
+                  ? 'Este item possui locação ativa. Encerre a locação antes de apagar da lista.'
+                  : 'O patrimônio sairá da lista principal, mas os registros históricos serão preservados.'}
+              </p>
+
+              {deactivateMessage && (
+                <p className="mt-4 rounded-lg border border-red-300 bg-red-100 p-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200">
+                  {deactivateMessage}
+                </p>
+              )}
+            </div>
+
+            <div className="flex flex-col-reverse gap-3 border-t border-border px-6 py-4 sm:flex-row sm:items-center sm:justify-end">
+              <button
+                type="button"
+                disabled={deactivateLoading}
+                onClick={onCloseDeactivateModal}
+                className="w-full rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-accent disabled:opacity-60 sm:w-auto"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                disabled={deactivateLoading}
+                onClick={onDeactivateEquipment}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60 sm:w-auto"
+              >
+                <Trash2 size={16} />
+                {deactivateLoading ? 'Apagando...' : 'Apagar da lista'}
+              </button>
+            </div>
           </section>
         </div>
       )}
