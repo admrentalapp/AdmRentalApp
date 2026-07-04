@@ -125,14 +125,23 @@ export function TechnicianTicketDetailPage({
         </p>
 
         <form className="mt-6 space-y-4" onSubmit={onAddEvent}>
-          <textarea
-            rows={4}
-            required
-            value={eventMessage}
-            onChange={(event) => onEventMessageChange(event.target.value)}
-            placeholder="Descreva o que foi verificado ou realizado..."
-            className="w-full resize-none rounded-lg border border-border bg-background px-4 py-3 text-foreground outline-none placeholder:text-muted-foreground focus:border-red-500"
-          />
+          <div className="space-y-2">
+            <label
+              htmlFor="technicianQuickNote"
+              className="block text-sm font-medium text-muted-foreground"
+            >
+              Descrição da anotação
+            </label>
+            <textarea
+              id="technicianQuickNote"
+              rows={4}
+              required
+              value={eventMessage}
+              onChange={(event) => onEventMessageChange(event.target.value)}
+              placeholder="Descreva o que foi verificado ou realizado..."
+              className="w-full resize-none rounded-lg border border-border bg-background px-4 py-3 text-foreground outline-none placeholder:text-muted-foreground focus:border-red-500"
+            />
+          </div>
 
           {eventError && (
             <p className="rounded-lg border border-red-300 bg-red-100 dark:border-red-900 dark:bg-red-950/40 p-3 text-sm text-red-700 dark:text-red-200">

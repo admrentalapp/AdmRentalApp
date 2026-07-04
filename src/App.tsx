@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
-import { Bell, ClipboardList, LogOut, Menu, Plus, X } from 'lucide-react'
+import { AlertTriangle, Bell, ClipboardList, LogOut, Menu, Plus, Trash2, X } from 'lucide-react'
 import { AppLogo } from '@/components/shared/app-logo'
 import { LoginBackground } from '@/components/auth/login-background'
 import { ThemeToggle } from '@/components/theme/theme-toggle'
+import { ClientEditTicketModal } from '@/components/tickets/client-edit-ticket-modal'
 import { ClientNewTicketModal } from '@/components/tickets/client-new-ticket-modal'
 import type { InspectionFormValues } from '@/components/tickets/inspection-section'
 import { PriorityBadge, StatusBadge } from '@/components/tickets/badges'
@@ -18,6 +19,7 @@ import {
   mergeEquipmentWithAllocations,
 } from '@/features/equipment/api'
 import {
+  deleteClientTicket,
   fetchTicketAttachments,
   insertTicketEvent,
   parseAttachments,
@@ -194,6 +196,10 @@ export default function App() {
   const [clientCompanyName, setClientCompanyName] = useState('')
   const [clientNewTicketOpen, setClientNewTicketOpen] = useState(false)
   const [clientNewMessage, setClientNewMessage] = useState('')
+  const [clientEditTicketOpen, setClientEditTicketOpen] = useState(false)
+  const [clientDeleteTicket, setClientDeleteTicket] = useState<Ticket | null>(null)
+  const [clientDeleteLoading, setClientDeleteLoading] = useState(false)
+  const [clientDeleteError, setClientDeleteError] = useState('')
   const [clientFormSites, setClientFormSites] = useState<Site[]>([])
   const [clientAllocatedFleet, setClientAllocatedFleet] = useState<
     EquipmentWithAllocation[]
@@ -1243,6 +1249,9 @@ export default function App() {
 
   function backToTicketsList() {
     setViewingTicket(null)
+    setClientEditTicketOpen(false)
+    setClientDeleteTicket(null)
+    setClientDeleteError('')
     setViewingTicketSiteName(undefined)
     setViewingTicketEquipmentLabel(undefined)
     setEditTicketMessage('')
@@ -1256,6 +1265,48 @@ export default function App() {
     setInspectionSaveSuccess('')
     setTicketApproval(null)
     setApprovalSubmitError('')
+  }
+
+  async function handleClientTicketUpdated(updatedTicket: Ticket) {
+    setViewingTicket(updatedTicket)
+    setClientEditTicketOpen(false)
+    setClientNewMessage('Chamado atualizado com sucesso.')
+    await loadClientTickets()
+    await loadTicketEvents(updatedTicket.id)
+  }
+
+  async function handleClientDeleteTicket() {
+    if (!clientDeleteTicket) return
+
+    setClientDeleteLoading(true)
+    setClientDeleteError('')
+
+    const { data, error } = await deleteClientTicket(clientDeleteTicket.id)
+
+    setClientDeleteLoading(false)
+
+    if (error) {
+      const message = error.message || 'Não foi possível excluir o chamado.'
+      setClientDeleteError(
+        message.includes('Could not find the function') ||
+          message.includes('schema cache')
+          ? 'Permissão de exclusão ainda não aplicada no Supabase. Execute o arquivo supabase/client-ticket-actions.sql no SQL Editor.'
+          : message,
+      )
+      return
+    }
+
+    if (!data?.length) {
+      setClientDeleteError(
+        'O chamado não foi excluído. Execute o arquivo supabase/client-ticket-actions.sql no SQL Editor do Supabase.',
+      )
+      return
+    }
+
+    setClientDeleteTicket(null)
+    setClientNewMessage('Chamado excluído com sucesso.')
+    backToTicketsList()
+    await loadClientTickets()
   }
 
   async function handleUploadAttachment(file: File) {
@@ -1645,9 +1696,13 @@ export default function App() {
     }
 
     if (page === 'chamados') {
-      void loadClients()
-      void loadProfiles()
-      void loadTickets()
+      if (profile && isMaintenanceRole(profile.role)) {
+        void loadTechnicianTickets(profile.id)
+      } else {
+        void loadClients()
+        void loadProfiles()
+        void loadTickets()
+      }
     }
 
     if (page === 'estoque') {
@@ -1666,6 +1721,8 @@ export default function App() {
   }
 
   function renderTechnicianArea() {
+    const technicianPage = activePage === 'checklist' ? 'checklist' : 'chamados'
+
     if (viewingTicket) {
       return (
         <main className="min-h-svh bg-background p-5 text-foreground sm:p-8">
@@ -1703,7 +1760,7 @@ export default function App() {
     return (
       <main className="min-h-svh bg-background text-foreground">
         <header className="border-b border-border px-5 py-6 sm:px-8">
-          <div className="mx-auto flex max-w-3xl items-center justify-between gap-4">
+          <div className="mx-auto flex max-w-5xl items-center justify-between gap-4">
             <div>
               <p className="text-sm text-muted-foreground">Área de manutenção</p>
               <h1 className="text-xl font-bold">
@@ -1723,75 +1780,128 @@ export default function App() {
           </div>
         </header>
 
-        <div className="mx-auto max-w-3xl p-5 sm:p-8">
-          <section>
-            <h2 className="text-2xl font-bold">Meus chamados</h2>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Chamados atribuídos a você. Registre inspeções e anotações no
-              histórico de cada OS.
-            </p>
-          </section>
-
-          <section className="mt-8 overflow-hidden rounded-2xl border border-border bg-card">
-            <div className="border-b border-border px-6 py-5">
-              <h3 className="font-bold">Chamados atribuídos</h3>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Total: {tickets.length}
+        <div className="mx-auto max-w-5xl p-5 sm:p-8">
+          <section className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <h2 className="text-2xl font-bold">
+                {technicianPage === 'checklist' ? 'Checklist' : 'Meus chamados'}
+              </h2>
+              <p className="mt-2 text-sm text-muted-foreground">
+                {technicianPage === 'checklist'
+                  ? 'Execute e acompanhe checklists vinculados a equipamentos.'
+                  : 'Chamados atribuídos a você. Registre inspeções e anotações no histórico de cada OS.'}
               </p>
             </div>
 
-            {ticketsLoading && (
-              <div className="p-8 text-center text-sm text-muted-foreground">
-                Carregando chamados...
-              </div>
-            )}
-
-            {!ticketsLoading && ticketsError && (
-              <div className="p-8 text-center text-sm text-red-600 dark:text-red-300">
-                {ticketsError}
-              </div>
-            )}
-
-            {!ticketsLoading && !ticketsError && tickets.length === 0 && (
-              <div className="flex min-h-64 flex-col items-center justify-center gap-4 p-8 text-center">
-                <ClipboardList className="text-muted-foreground" size={34} />
-                <div>
-                  <p className="font-medium text-foreground">
-                    Nenhum chamado atribuído.
-                  </p>
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    O gestor ADM atribuirá chamados a você após a triagem.
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {!ticketsLoading && !ticketsError && tickets.length > 0 && (
-              <div className="divide-y divide-border">
-                {tickets.map((ticket) => (
-                  <button
-                    key={ticket.id}
-                    type="button"
-                    onClick={() => void openTicketDetail(ticket)}
-                    className="flex w-full flex-col gap-3 px-6 py-5 text-left transition hover:bg-accent sm:flex-row sm:items-center sm:justify-between"
-                  >
-                    <div>
-                      <p className="font-semibold">
-                        #{ticket.ticket_number} · {ticket.title}
-                      </p>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        {formatDateTime(ticket.created_at)}
-                      </p>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      <StatusBadge status={ticket.status} />
-                      <PriorityBadge priority={ticket.priority} />
-                    </div>
-                  </button>
-                ))}
-              </div>
-            )}
+            <div className="inline-flex rounded-xl border border-border bg-card p-1">
+              <button
+                type="button"
+                onClick={() => changePage('chamados')}
+                className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
+                  technicianPage === 'chamados'
+                    ? 'bg-red-600 text-white'
+                    : 'text-muted-foreground hover:bg-accent hover:text-foreground'
+                }`}
+              >
+                Meus chamados
+              </button>
+              <button
+                type="button"
+                onClick={() => changePage('checklist')}
+                className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
+                  technicianPage === 'checklist'
+                    ? 'bg-red-600 text-white'
+                    : 'text-muted-foreground hover:bg-accent hover:text-foreground'
+                }`}
+              >
+                Checklist
+              </button>
+            </div>
           </section>
+
+          {technicianPage === 'checklist' ? (
+            <div className="mt-8">
+              <ChecklistPage
+                templates={checklistTemplates}
+                runs={checklistRuns}
+                equipment={equipmentFleet}
+                loading={checklistLoading}
+                error={checklistError}
+                selectedTemplateId={checklistTemplateId}
+                selectedEquipmentId={checklistEquipmentId}
+                notes={checklistNotes}
+                startLoading={checklistStartLoading}
+                startMessage={checklistStartMessage}
+                isGestor={false}
+                onTemplateChange={setChecklistTemplateId}
+                onEquipmentChange={setChecklistEquipmentId}
+                onNotesChange={setChecklistNotes}
+                onStartRun={handleStartChecklist}
+                onReload={() => void loadChecklistData()}
+              />
+            </div>
+          ) : (
+            <section className="mt-8 overflow-hidden rounded-2xl border border-border bg-card">
+              <div className="border-b border-border px-6 py-5">
+                <h3 className="font-bold">Chamados atribuídos</h3>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Total: {tickets.length}
+                </p>
+              </div>
+
+              {ticketsLoading && (
+                <div className="p-8 text-center text-sm text-muted-foreground">
+                  Carregando chamados...
+                </div>
+              )}
+
+              {!ticketsLoading && ticketsError && (
+                <div className="p-8 text-center text-sm text-red-600 dark:text-red-300">
+                  {ticketsError}
+                </div>
+              )}
+
+              {!ticketsLoading && !ticketsError && tickets.length === 0 && (
+                <div className="flex min-h-64 flex-col items-center justify-center gap-4 p-8 text-center">
+                  <ClipboardList className="text-muted-foreground" size={34} />
+                  <div>
+                    <p className="font-medium text-foreground">
+                      Nenhum chamado atribuído.
+                    </p>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      O gestor ADM atribuirá chamados a você após a triagem.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {!ticketsLoading && !ticketsError && tickets.length > 0 && (
+                <div className="divide-y divide-border">
+                  {tickets.map((ticket) => (
+                    <button
+                      key={ticket.id}
+                      type="button"
+                      onClick={() => void openTicketDetail(ticket)}
+                      className="flex w-full flex-col gap-3 px-6 py-5 text-left transition hover:bg-accent sm:flex-row sm:items-center sm:justify-between"
+                    >
+                      <div>
+                        <p className="font-semibold">
+                          #{ticket.ticket_number} · {ticket.title}
+                        </p>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          {formatDateTime(ticket.created_at)}
+                        </p>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        <StatusBadge status={ticket.status} />
+                        <PriorityBadge priority={ticket.priority} />
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </section>
+          )}
         </div>
       </main>
     )
@@ -1845,8 +1955,89 @@ export default function App() {
               approvalSubmitLoading={approvalSubmitLoading}
               approvalSubmitError={approvalSubmitError}
               onRespondApproval={handleClientApproval}
+              onEditTicket={() => {
+                setClientDeleteError('')
+                setClientEditTicketOpen(true)
+              }}
+              onDeleteTicket={() => {
+                setClientDeleteError('')
+                setClientDeleteTicket(viewingTicket)
+              }}
               onBack={backToTicketsList}
             />
+
+            <ClientEditTicketModal
+              open={clientEditTicketOpen}
+              companyName={clientCompanyName}
+              ticket={viewingTicket}
+              userId={profile.id}
+              sites={clientFormSites}
+              allocatedFleet={clientAllocatedFleet}
+              onClose={() => setClientEditTicketOpen(false)}
+              onUpdated={handleClientTicketUpdated}
+            />
+
+            {clientDeleteTicket && (
+              <div className="fixed inset-0 z-60 flex items-center justify-center overflow-y-auto bg-black/60 p-4 backdrop-blur-sm">
+                <div className="w-full max-w-md overflow-hidden rounded-2xl border border-border bg-card shadow-2xl">
+                  <div className="border-b border-border px-6 py-5">
+                    <div className="flex items-start gap-4">
+                      <div className="rounded-2xl bg-red-100 p-3 text-red-600 dark:bg-red-950/60 dark:text-red-400">
+                        <AlertTriangle size={22} />
+                      </div>
+                      <div>
+                        <h4 className="text-lg font-bold">Excluir chamado</h4>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          Esta ação remove o chamado e o histórico vinculado a ele.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="px-6 py-5">
+                    <p className="text-sm text-foreground">
+                      Deseja excluir o chamado{' '}
+                      <span className="font-semibold">
+                        "#{clientDeleteTicket.ticket_number} · {clientDeleteTicket.title}"
+                      </span>
+                      ?
+                    </p>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      Esta ação não pode ser desfeita.
+                    </p>
+
+                    {clientDeleteError && (
+                      <p className="mt-4 rounded-lg border border-red-300 bg-red-100 p-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200">
+                        {clientDeleteError}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="flex flex-col-reverse gap-3 border-t border-border px-6 py-4 sm:flex-row sm:items-center sm:justify-end">
+                    <button
+                      type="button"
+                      disabled={clientDeleteLoading}
+                      onClick={() => {
+                        setClientDeleteTicket(null)
+                        setClientDeleteError('')
+                      }}
+                      className="w-full rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-accent disabled:opacity-60 sm:w-auto"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="button"
+                      disabled={clientDeleteLoading}
+                      onClick={() => void handleClientDeleteTicket()}
+                      className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60 sm:w-auto"
+                    >
+                      <Trash2 size={16} />
+                      {clientDeleteLoading ? 'Excluindo...' : 'Excluir chamado'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </main>
       )
@@ -2424,6 +2615,7 @@ export default function App() {
               notes={checklistNotes}
               startLoading={checklistStartLoading}
               startMessage={checklistStartMessage}
+              isGestor={profile.role === 'gestor_adm'}
               onTemplateChange={setChecklistTemplateId}
               onEquipmentChange={setChecklistEquipmentId}
               onNotesChange={setChecklistNotes}

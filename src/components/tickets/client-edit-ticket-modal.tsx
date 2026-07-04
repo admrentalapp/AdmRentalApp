@@ -1,11 +1,8 @@
-import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
-import { AlertTriangle, Loader2, Paperclip, Upload, X } from 'lucide-react'
-import { ATTACHMENT_ACCEPT } from '@/config/storage'
+import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { AlertTriangle, Loader2, Save, X } from 'lucide-react'
 import { filterClientEquipmentBySite } from '@/features/equipment/api'
-import { createClientTicket, validateAttachmentFile } from '@/features/tickets/api'
-import type { EquipmentWithAllocation, Site } from '@/types'
-
-const MAX_OPENING_ATTACHMENTS = 5
+import { insertTicketEvent, updateClientTicket } from '@/features/tickets/api'
+import type { EquipmentWithAllocation, Site, Ticket } from '@/types'
 
 function defaultIncidentAtValue() {
   const now = new Date()
@@ -15,30 +12,44 @@ function defaultIncidentAtValue() {
   return local.toISOString().slice(0, 16)
 }
 
+function toDateTimeLocalValue(value: string | null) {
+  if (!value) {
+    return defaultIncidentAtValue()
+  }
+
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) {
+    return defaultIncidentAtValue()
+  }
+
+  const offset = date.getTimezoneOffset()
+  const local = new Date(date.getTime() - offset * 60_000)
+  return local.toISOString().slice(0, 16)
+}
+
 function normalizePhone(value: string) {
   return value.replace(/\D/g, '')
 }
 
-export function ClientNewTicketModal({
+export function ClientEditTicketModal({
   open,
   companyName,
-  clientId,
+  ticket,
   userId,
   sites,
   allocatedFleet,
   onClose,
-  onCreated,
+  onUpdated,
 }: {
   open: boolean
   companyName: string
-  clientId: string
+  ticket: Ticket | null
   userId: string
   sites: Site[]
   allocatedFleet: EquipmentWithAllocation[]
   onClose: () => void
-  onCreated: (warning?: string) => void | Promise<void>
+  onUpdated: (ticket: Ticket) => void | Promise<void>
 }) {
-  const fileInputRef = useRef<HTMLInputElement>(null)
   const [siteId, setSiteId] = useState('')
   const [equipmentId, setEquipmentId] = useState('')
   const [incidentAt, setIncidentAt] = useState(defaultIncidentAtValue)
@@ -46,7 +57,6 @@ export function ClientNewTicketModal({
   const [siteContactPhone, setSiteContactPhone] = useState('')
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
-  const [attachments, setAttachments] = useState<File[]>([])
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
 
@@ -56,20 +66,19 @@ export function ClientNewTicketModal({
   )
 
   useEffect(() => {
-    if (!open) {
+    if (!open || !ticket) {
       return
     }
 
-    setSiteId('')
-    setEquipmentId('')
-    setIncidentAt(defaultIncidentAtValue())
-    setSiteContactName('')
-    setSiteContactPhone('')
-    setTitle('')
-    setDescription('')
-    setAttachments([])
+    setSiteId(ticket.site_id ?? '')
+    setEquipmentId(ticket.equipment_id ?? '')
+    setIncidentAt(toDateTimeLocalValue(ticket.incident_at))
+    setSiteContactName(ticket.site_contact_name ?? '')
+    setSiteContactPhone(ticket.site_contact_phone ?? '')
+    setTitle(ticket.title)
+    setDescription(ticket.description)
     setMessage('')
-  }, [open])
+  }, [open, ticket])
 
   useEffect(() => {
     if (
@@ -80,48 +89,9 @@ export function ClientNewTicketModal({
     }
   }, [availableEquipment, equipmentId])
 
-  function handleAddFiles(fileList: FileList | null) {
-    if (!fileList?.length) {
-      return
-    }
-
-    const nextFiles = [...attachments]
-    const errors: string[] = []
-
-    for (const file of Array.from(fileList)) {
-      if (nextFiles.length >= MAX_OPENING_ATTACHMENTS) {
-        errors.push(`Máximo de ${MAX_OPENING_ATTACHMENTS} anexos na abertura.`)
-        break
-      }
-
-      const validationError = validateAttachmentFile(file)
-      if (validationError) {
-        errors.push(`${file.name}: ${validationError}`)
-        continue
-      }
-
-      if (nextFiles.some((item) => item.name === file.name && item.size === file.size)) {
-        continue
-      }
-
-      nextFiles.push(file)
-    }
-
-    setAttachments(nextFiles)
-
-    if (errors.length > 0) {
-      setMessage(errors.join(' '))
-    } else {
-      setMessage('')
-    }
-  }
-
-  function removeAttachment(index: number) {
-    setAttachments((current) => current.filter((_, itemIndex) => itemIndex !== index))
-  }
-
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    if (!ticket) return
 
     if (!siteId) {
       setMessage('Selecione a obra onde o equipamento está.')
@@ -178,8 +148,8 @@ export function ClientNewTicketModal({
     setLoading(true)
     setMessage('')
 
-    const { data, error, attachmentErrors } = await createClientTicket({
-      clientId,
+    const { data: updatedTicket, error } = await updateClientTicket({
+      ticketId: ticket.id,
       siteId,
       equipmentId,
       incidentAt: incidentDate.toISOString(),
@@ -187,30 +157,49 @@ export function ClientNewTicketModal({
       siteContactPhone: trimmedContactPhone,
       title: trimmedTitle,
       description: trimmedDescription,
-      createdBy: userId,
-      attachments,
     })
 
     setLoading(false)
 
-    if (error || !data) {
-      setMessage(
-        error?.message ||
-          'Não foi possível abrir o chamado. Verifique se seu perfil está vinculado à empresa.',
-      )
+    if (error || !updatedTicket) {
+      setMessage(error?.message || 'Não foi possível atualizar o chamado.')
       return
     }
 
-    const warning =
-      attachmentErrors.length > 0
-        ? `Chamado aberto, mas alguns anexos falharam: ${attachmentErrors.join(' · ')}`
-        : undefined
+    const changes: string[] = []
 
-    await onCreated(warning)
+    if ((ticket.site_id ?? '') !== siteId) changes.push('obra atualizada')
+    if ((ticket.equipment_id ?? '') !== equipmentId) {
+      changes.push('equipamento atualizado')
+    }
+    if ((ticket.incident_at ?? '') !== updatedTicket.incident_at) {
+      changes.push('data da avaria atualizada')
+    }
+    if ((ticket.site_contact_name ?? '') !== trimmedContactName) {
+      changes.push('responsável na obra atualizado')
+    }
+    if ((ticket.site_contact_phone ?? '') !== trimmedContactPhone) {
+      changes.push('telefone de contato atualizado')
+    }
+    if (ticket.title !== trimmedTitle) changes.push('título atualizado')
+    if (ticket.description !== trimmedDescription) {
+      changes.push('descrição atualizada')
+    }
+
+    if (changes.length > 0) {
+      await insertTicketEvent(
+        ticket.id,
+        'atualizacao',
+        `Chamado atualizado pelo cliente: ${changes.join(' · ')}`,
+        userId,
+      )
+    }
+
+    await onUpdated(updatedTicket)
     onClose()
   }
 
-  if (!open) {
+  if (!open || !ticket) {
     return null
   }
 
@@ -219,8 +208,8 @@ export function ClientNewTicketModal({
       <section className="my-auto max-h-[calc(100svh-2rem)] w-full max-w-2xl overflow-y-auto rounded-2xl border border-border bg-card p-5 shadow-2xl sm:p-6">
         <div className="flex items-start justify-between gap-3 sm:gap-4">
           <div className="min-w-0">
-            <p className="text-sm text-muted-foreground">Nova solicitação</p>
-            <h3 className="mt-1 text-xl font-bold">Abrir chamado</h3>
+            <p className="text-sm text-muted-foreground">Atualizar solicitação</p>
+            <h3 className="mt-1 text-xl font-bold">Editar chamado</h3>
             <p className="mt-1 text-xs text-muted-foreground">{companyName}</p>
           </div>
           <button
@@ -232,13 +221,12 @@ export function ClientNewTicketModal({
           </button>
         </div>
 
-        <div className="mt-5 rounded-xl border border-amber-300 bg-amber-100 dark:border-amber-900/60 dark:bg-amber-950/20 p-4 text-sm text-amber-800 dark:text-amber-100">
+        <div className="mt-5 rounded-xl border border-amber-300 bg-amber-100 p-4 text-sm text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/20 dark:text-amber-100">
           <div className="flex gap-3">
             <AlertTriangle className="mt-0.5 shrink-0" size={18} />
             <p>
-              Se houver risco à operação ou segurança, interrompa o uso do
-              equipamento e sinalize a equipe na obra antes de aguardar o
-              atendimento da ADM.
+              Revise obra, equipamento e descrição antes de salvar. Essas
+              informações serão usadas pela equipe de manutenção no atendimento.
             </p>
           </div>
         </div>
@@ -247,13 +235,13 @@ export function ClientNewTicketModal({
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label
-                htmlFor="clientTicketSite"
+                htmlFor="editClientTicketSite"
                 className="mb-2 block text-sm font-medium text-foreground"
               >
                 Obra
               </label>
               <select
-                id="clientTicketSite"
+                id="editClientTicketSite"
                 required
                 value={siteId}
                 onChange={(event) => setSiteId(event.target.value)}
@@ -270,13 +258,13 @@ export function ClientNewTicketModal({
 
             <div>
               <label
-                htmlFor="clientTicketEquipment"
+                htmlFor="editClientTicketEquipment"
                 className="mb-2 block text-sm font-medium text-foreground"
               >
                 Equipamento
               </label>
               <select
-                id="clientTicketEquipment"
+                id="editClientTicketEquipment"
                 required
                 disabled={!siteId}
                 value={equipmentId}
@@ -297,13 +285,13 @@ export function ClientNewTicketModal({
 
           <div>
             <label
-              htmlFor="clientTicketIncidentAt"
+              htmlFor="editClientTicketIncidentAt"
               className="mb-2 block text-sm font-medium text-foreground"
             >
               Data e hora da avaria
             </label>
             <input
-              id="clientTicketIncidentAt"
+              id="editClientTicketIncidentAt"
               type="datetime-local"
               required
               value={incidentAt}
@@ -316,13 +304,13 @@ export function ClientNewTicketModal({
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label
-                htmlFor="clientTicketContactName"
+                htmlFor="editClientTicketContactName"
                 className="mb-2 block text-sm font-medium text-foreground"
               >
                 Responsável na obra
               </label>
               <input
-                id="clientTicketContactName"
+                id="editClientTicketContactName"
                 type="text"
                 required
                 value={siteContactName}
@@ -334,13 +322,13 @@ export function ClientNewTicketModal({
 
             <div>
               <label
-                htmlFor="clientTicketContactPhone"
+                htmlFor="editClientTicketContactPhone"
                 className="mb-2 block text-sm font-medium text-foreground"
               >
                 Telefone do contato
               </label>
               <input
-                id="clientTicketContactPhone"
+                id="editClientTicketContactPhone"
                 type="tel"
                 required
                 value={siteContactPhone}
@@ -353,13 +341,13 @@ export function ClientNewTicketModal({
 
           <div>
             <label
-              htmlFor="clientTicketTitle"
+              htmlFor="editClientTicketTitle"
               className="mb-2 block text-sm font-medium text-foreground"
             >
               Título
             </label>
             <input
-              id="clientTicketTitle"
+              id="editClientTicketTitle"
               type="text"
               required
               value={title}
@@ -371,13 +359,13 @@ export function ClientNewTicketModal({
 
           <div>
             <label
-              htmlFor="clientTicketDescription"
+              htmlFor="editClientTicketDescription"
               className="mb-2 block text-sm font-medium text-foreground"
             >
               Descrição detalhada
             </label>
             <textarea
-              id="clientTicketDescription"
+              id="editClientTicketDescription"
               required
               rows={4}
               value={description}
@@ -387,64 +375,8 @@ export function ClientNewTicketModal({
             />
           </div>
 
-          <div className="rounded-xl border border-border bg-background/60 p-4">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-              <div>
-                <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-                  <Paperclip size={16} />
-                  Fotos e documentos
-                </div>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Envie imagens ou PDF da avaria (até {MAX_OPENING_ATTACHMENTS}{' '}
-                  arquivos, 10 MB cada).
-                </p>
-              </div>
-
-              <div className="shrink-0">
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  multiple
-                  accept={ATTACHMENT_ACCEPT}
-                  className="hidden"
-                  disabled={loading || attachments.length >= MAX_OPENING_ATTACHMENTS}
-                  onChange={(event) => handleAddFiles(event.target.files)}
-                />
-                <button
-                  type="button"
-                  disabled={loading || attachments.length >= MAX_OPENING_ATTACHMENTS}
-                  onClick={() => fileInputRef.current?.click()}
-                  className="flex items-center justify-center gap-2 rounded-lg border border-border px-4 py-2.5 text-sm font-medium text-foreground hover:bg-accent disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  <Upload size={16} />
-                  Adicionar anexos
-                </button>
-              </div>
-            </div>
-
-            {attachments.length > 0 && (
-              <ul className="mt-4 space-y-2">
-                {attachments.map((file, index) => (
-                  <li
-                    key={`${file.name}-${file.size}-${index}`}
-                    className="flex items-center justify-between gap-3 rounded-lg border border-border bg-card px-3 py-2 text-sm"
-                  >
-                    <span className="truncate text-foreground">{file.name}</span>
-                    <button
-                      type="button"
-                      onClick={() => removeAttachment(index)}
-                      className="shrink-0 rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
-                    >
-                      <X size={14} />
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-
           {message && (
-            <p className="rounded-lg border border-red-300 bg-red-100 dark:border-red-900 dark:bg-red-950/40 p-3 text-sm text-red-700 dark:text-red-200">
+            <p className="rounded-lg border border-red-300 bg-red-100 p-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200">
               {message}
             </p>
           )}
@@ -465,10 +397,13 @@ export function ClientNewTicketModal({
               {loading ? (
                 <>
                   <Loader2 size={16} className="animate-spin" />
-                  Enviando...
+                  Salvando...
                 </>
               ) : (
-                'Abrir chamado'
+                <>
+                  <Save size={16} />
+                  Salvar alterações
+                </>
               )}
             </button>
           </div>

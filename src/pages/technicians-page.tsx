@@ -239,10 +239,10 @@ export function TechniciansPage({
       </section>
 
       {editProfile && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-5">
-          <section className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-2xl">
-            <div className="flex items-start justify-between gap-4">
-              <div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/75 p-4 sm:p-5">
+          <section className="my-auto max-h-[calc(100svh-2rem)] w-full max-w-md overflow-y-auto rounded-2xl border border-border bg-card p-5 shadow-2xl sm:p-6">
+            <div className="flex items-start justify-between gap-3 sm:gap-4">
+              <div className="min-w-0">
                 <p className="text-sm text-muted-foreground">Gerenciar acesso</p>
                 <h3 className="mt-1 text-xl font-bold">
                   {editProfile.full_name || 'Sem nome'}
@@ -252,7 +252,7 @@ export function TechniciansPage({
               <button
                 type="button"
                 onClick={onCloseEdit}
-                className="rounded-lg p-2 text-muted-foreground hover:bg-accent hover:text-foreground"
+                className="shrink-0 rounded-lg p-2 text-muted-foreground hover:bg-accent hover:text-foreground"
               >
                 <X size={20} />
               </button>
@@ -332,7 +332,7 @@ export function TechniciansPage({
                 <button
                   type="button"
                   onClick={onCloseEdit}
-                  className="rounded-lg border border-border px-4 py-3 text-sm font-medium text-foreground hover:bg-accent"
+                  className="w-full rounded-lg border border-border px-4 py-3 text-sm font-medium text-foreground hover:bg-accent sm:w-auto"
                 >
                   Cancelar
                 </button>
@@ -340,7 +340,7 @@ export function TechniciansPage({
                 <button
                   type="submit"
                   disabled={editLoading}
-                  className="rounded-lg bg-red-600 px-5 py-3 text-sm font-semibold text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="w-full rounded-lg bg-red-600 px-5 py-3 text-sm font-semibold text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
                 >
                   {editLoading ? 'Salvando...' : 'Salvar alterações'}
                 </button>
@@ -351,74 +351,119 @@ export function TechniciansPage({
       )}
 
       {newUserOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-5">
-          <section className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-2xl">
-            <div className="flex items-start justify-between gap-4">
-              <div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/75 p-4 sm:p-5">
+          <section className="my-auto max-h-[calc(100svh-2rem)] w-full max-w-md overflow-y-auto rounded-2xl border border-border bg-card p-5 shadow-2xl sm:p-6">
+            <div className="flex items-start justify-between gap-3 sm:gap-4">
+              <div className="min-w-0">
                 <p className="text-sm text-muted-foreground">Novo acesso</p>
                 <h3 className="mt-1 text-xl font-bold">Criar usuário</h3>
               </div>
               <button
                 type="button"
                 onClick={onCloseNewUser}
-                className="rounded-lg p-2 text-muted-foreground hover:bg-accent"
+                className="shrink-0 rounded-lg p-2 text-muted-foreground hover:bg-accent"
               >
                 <X size={20} />
               </button>
             </div>
 
             <form className="mt-6 space-y-4" onSubmit={onCreateUser}>
-              <input
-                type="text"
-                value={newUserName}
-                onChange={(event) => onNewUserNameChange(event.target.value)}
-                placeholder="Nome completo"
-                required
-                className="w-full rounded-lg border border-border bg-background px-4 py-3 text-foreground"
-              />
-              <input
-                type="email"
-                value={newUserEmail}
-                onChange={(event) => onNewUserEmailChange(event.target.value)}
-                placeholder="E-mail de login"
-                required
-                className="w-full rounded-lg border border-border bg-background px-4 py-3 text-foreground"
-              />
-              <input
-                type="password"
-                value={newUserPassword}
-                onChange={(event) => onNewUserPasswordChange(event.target.value)}
-                placeholder="Senha inicial (mín. 6 caracteres)"
-                required
-                minLength={6}
-                className="w-full rounded-lg border border-border bg-background px-4 py-3 text-foreground"
-              />
-              <select
-                value={newUserRole}
-                onChange={(event) =>
-                  onNewUserRoleChange(event.target.value as UserRole)
-                }
-                className="w-full rounded-lg border border-border bg-background px-4 py-3 text-foreground"
-              >
-                <option value="cliente">Cliente</option>
-                <option value="manutencao_adm">Manutenção ADM</option>
-                <option value="manutencao_externa">Manutenção Externa</option>
-                <option value="gestor_adm">Gestor ADM</option>
-              </select>
-              {newUserRole === 'cliente' && (
-                <select
-                  value={newUserClientId}
-                  onChange={(event) => onNewUserClientChange(event.target.value)}
-                  className="w-full rounded-lg border border-border bg-background px-4 py-3 text-foreground"
-                  required
+              <div className="space-y-2">
+                <label
+                  htmlFor="newUserName"
+                  className="block text-sm font-medium text-muted-foreground"
                 >
-                  <option value="">Empresa vinculada...</option>
-                  {clients.map((client) => (
-                    <option key={client.id} value={client.id}>
-                      {client.name}
-                    </option>
-                  ))}
+                  Nome completo
+                </label>
+                <input
+                  id="newUserName"
+                  type="text"
+                  value={newUserName}
+                  onChange={(event) => onNewUserNameChange(event.target.value)}
+                  placeholder="Nome completo"
+                  required
+                  className="w-full rounded-lg border border-border bg-background px-4 py-3 text-foreground"
+                />
+              </div>
+              <div className="space-y-2">
+                <label
+                  htmlFor="newUserEmail"
+                  className="block text-sm font-medium text-muted-foreground"
+                >
+                  E-mail de login
+                </label>
+                <input
+                  id="newUserEmail"
+                  type="email"
+                  value={newUserEmail}
+                  onChange={(event) => onNewUserEmailChange(event.target.value)}
+                  placeholder="E-mail de login"
+                  required
+                  className="w-full rounded-lg border border-border bg-background px-4 py-3 text-foreground"
+                />
+              </div>
+              <div className="space-y-2">
+                <label
+                  htmlFor="newUserPassword"
+                  className="block text-sm font-medium text-muted-foreground"
+                >
+                  Senha inicial
+                </label>
+                <input
+                  id="newUserPassword"
+                  type="password"
+                  value={newUserPassword}
+                  onChange={(event) => onNewUserPasswordChange(event.target.value)}
+                  placeholder="Senha inicial (mín. 6 caracteres)"
+                  required
+                  minLength={6}
+                  className="w-full rounded-lg border border-border bg-background px-4 py-3 text-foreground"
+                />
+              </div>
+              <div className="space-y-2">
+                <label
+                  htmlFor="newUserRole"
+                  className="block text-sm font-medium text-muted-foreground"
+                >
+                  Papel do usuário
+                </label>
+                <select
+                  id="newUserRole"
+                  value={newUserRole}
+                  onChange={(event) =>
+                    onNewUserRoleChange(event.target.value as UserRole)
+                  }
+                  className="w-full rounded-lg border border-border bg-background px-4 py-3 text-foreground"
+                >
+                  <option value="cliente">Cliente</option>
+                  <option value="manutencao_adm">Manutenção ADM</option>
+                  <option value="manutencao_externa">Manutenção Externa</option>
+                  <option value="gestor_adm">Gestor ADM</option>
                 </select>
+              </div>
+              {newUserRole === 'cliente' && (
+                <div className="space-y-2">
+                  <label
+                    htmlFor="newUserClient"
+                    className="block text-sm font-medium text-muted-foreground"
+                  >
+                    Empresa vinculada
+                  </label>
+                  <select
+                    id="newUserClient"
+                    value={newUserClientId}
+                    onChange={(event) => onNewUserClientChange(event.target.value)}
+                    className="w-full rounded-lg border border-border bg-background px-4 py-3 text-foreground"
+                    required
+                  >
+                    <option value="">Empresa vinculada...</option>
+                    {clients.map((client) => (
+                      <option key={client.id} value={client.id}>
+                        {client.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               )}
               {newUserMessage && (
                 <p className="rounded-lg border border-red-300 bg-red-100 dark:border-red-900 dark:bg-red-950/40 p-3 text-sm text-red-700 dark:text-red-200">

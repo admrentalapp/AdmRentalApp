@@ -41,6 +41,26 @@ create table if not exists public.checklist_run_items (
 create index if not exists checklist_items_template_idx on public.checklist_items (template_id);
 create index if not exists checklist_runs_equipment_idx on public.checklist_runs (equipment_id);
 
+with ranked_templates as (
+  select
+    id,
+    row_number() over (
+      partition by lower(btrim(name))
+      order by created_at asc, id asc
+    ) as duplicate_rank
+  from public.checklist_templates
+  where active = true
+)
+update public.checklist_templates template
+set active = false
+from ranked_templates ranked
+where template.id = ranked.id
+  and ranked.duplicate_rank > 1;
+
+create unique index if not exists checklist_templates_active_name_unique
+on public.checklist_templates ((lower(btrim(name))))
+where active = true;
+
 alter table public.checklist_templates enable row level security;
 alter table public.checklist_items enable row level security;
 alter table public.checklist_runs enable row level security;
@@ -87,6 +107,11 @@ on public.checklist_runs for update to authenticated
 using (performed_by = auth.uid() or public.is_gestor_adm())
 with check (performed_by = auth.uid() or public.is_gestor_adm());
 
+drop policy if exists "checklist_runs_delete" on public.checklist_runs;
+create policy "checklist_runs_delete"
+on public.checklist_runs for delete to authenticated
+using (public.is_gestor_adm());
+
 drop policy if exists "checklist_run_items_select" on public.checklist_run_items;
 create policy "checklist_run_items_select"
 on public.checklist_run_items for select to authenticated
@@ -116,14 +141,6 @@ with check (
   )
 );
 
-with check (
-  exists (
-    select 1 from public.checklist_runs r
-    where r.id = run_id
-      and (r.performed_by = auth.uid() or public.is_gestor_adm())
-  )
-);
-
 drop policy if exists "checklist_run_items_insert" on public.checklist_run_items;
 create policy "checklist_run_items_insert"
 on public.checklist_run_items for insert to authenticated
@@ -135,10 +152,24 @@ with check (
   )
 );
 
+drop policy if exists "checklist_run_items_delete" on public.checklist_run_items;
+create policy "checklist_run_items_delete"
+on public.checklist_run_items for delete to authenticated
+using (
+  exists (
+    select 1 from public.checklist_runs r
+    where r.id = run_id
+      and public.is_gestor_adm()
+  )
+);
+
 insert into public.checklist_templates (name, description)
 select 'Inspeção diária de equipamento', 'Verificações básicas antes da operação'
 where not exists (
-  select 1 from public.checklist_templates where name = 'Inspeção diária de equipamento'
+  select 1
+  from public.checklist_templates
+  where lower(btrim(name)) = lower(btrim('Inspeção diária de equipamento'))
+    and active = true
 );
 
 insert into public.checklist_items (template_id, label, sort_order)
@@ -152,7 +183,8 @@ cross join (
     ('Funcionamento de alarmes', 4),
     ('Limpeza geral do equipamento', 5)
 ) as item(label, sort_order)
-where t.name = 'Inspeção diária de equipamento'
+where lower(btrim(t.name)) = lower(btrim('Inspeção diária de equipamento'))
+  and t.active = true
   and not exists (
     select 1 from public.checklist_items ci where ci.template_id = t.id
   );

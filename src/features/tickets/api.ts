@@ -1,10 +1,11 @@
 import { supabase } from '@/lib/supabase'
+import { TICKET_SELECT_COLUMNS } from '@/features/tickets/constants'
 import {
   ALLOWED_ATTACHMENT_MIME_TYPES,
   MAX_ATTACHMENT_BYTES,
   TICKET_ATTACHMENTS_BUCKET,
 } from '@/config/storage'
-import type { Attachment, TicketEvent } from '@/types'
+import type { Attachment, Ticket, TicketEvent } from '@/types'
 
 function sanitizeFileName(name: string) {
   return name
@@ -182,4 +183,47 @@ export async function createClientTicket(input: CreateClientTicketInput) {
   }
 
   return { data: created, error: null, attachmentErrors }
+}
+
+export type UpdateClientTicketInput = {
+  ticketId: string
+  siteId: string
+  equipmentId: string
+  incidentAt: string
+  siteContactName: string
+  siteContactPhone: string
+  title: string
+  description: string
+}
+
+export async function updateClientTicket(input: UpdateClientTicketInput) {
+  const { data: ticketId, error } = await supabase.rpc('client_update_ticket', {
+    p_ticket_id: input.ticketId,
+    p_site_id: input.siteId,
+    p_equipment_id: input.equipmentId,
+    p_incident_at: input.incidentAt,
+    p_site_contact_name: input.siteContactName,
+    p_site_contact_phone: input.siteContactPhone,
+    p_title: input.title,
+    p_description: input.description,
+  })
+
+  if (error || !ticketId) {
+    return { data: null, error }
+  }
+
+  const { data: ticket, error: fetchError } = await supabase
+    .from('tickets')
+    .select(TICKET_SELECT_COLUMNS)
+    .eq('id', ticketId)
+    .single()
+
+  return {
+    data: fetchError ? null : (ticket as Ticket),
+    error: fetchError,
+  }
+}
+
+export async function deleteClientTicket(ticketId: string) {
+  return supabase.from('tickets').delete().eq('id', ticketId).select('id')
 }

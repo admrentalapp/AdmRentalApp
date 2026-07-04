@@ -1,4 +1,4 @@
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, FilePenLine, Trash2 } from 'lucide-react'
 import { PriorityBadge, StatusBadge } from '@/components/tickets/badges'
 import { ClientApprovalSection } from '@/components/tickets/client-approval-section'
 import { AttachmentsSection } from '@/components/tickets/attachments-section'
@@ -28,6 +28,8 @@ export function ClientTicketDetailPage({
   approvalSubmitLoading,
   approvalSubmitError,
   onRespondApproval,
+  onEditTicket,
+  onDeleteTicket,
   onBack,
 }: {
   ticket: Ticket
@@ -52,18 +54,41 @@ export function ClientTicketDetailPage({
     decision: 'aprovado' | 'recusado',
     notes: string,
   ) => void | Promise<void>
+  onEditTicket: () => void
+  onDeleteTicket: () => void
   onBack: () => void
 }) {
   return (
     <>
-      <button
-        type="button"
-        onClick={onBack}
-        className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft size={16} />
-        Voltar para meus chamados
-      </button>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <button
+          type="button"
+          onClick={onBack}
+          className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft size={16} />
+          Voltar para meus chamados
+        </button>
+
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={onEditTicket}
+            className="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-accent"
+          >
+            <FilePenLine size={16} />
+            Editar chamado
+          </button>
+          <button
+            type="button"
+            onClick={onDeleteTicket}
+            className="inline-flex items-center gap-2 rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-950/40"
+          >
+            <Trash2 size={16} />
+            Excluir chamado
+          </button>
+        </div>
+      </div>
 
       <section className="mt-5 rounded-2xl border border-border bg-card p-6">
         <p className="text-sm text-muted-foreground">

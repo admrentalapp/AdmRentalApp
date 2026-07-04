@@ -5,7 +5,6 @@ export async function fetchChecklistTemplates() {
   return supabase
     .from('checklist_templates')
     .select('id, name, description, active, created_at')
-    .eq('active', true)
     .order('name', { ascending: true })
 }
 
@@ -104,6 +103,50 @@ export async function completeChecklistRun(runId: string) {
       completed_at: new Date().toISOString(),
     })
     .eq('id', runId)
+}
+
+export async function deleteChecklistRun(runId: string) {
+  return supabase.from('checklist_runs').delete().eq('id', runId).select('id')
+}
+
+export async function createChecklistTemplate(input: {
+  name: string
+  description: string | null
+}) {
+  return supabase
+    .from('checklist_templates')
+    .insert({
+      name: input.name,
+      description: input.description,
+      active: true,
+    })
+    .select('id, name, description, active, created_at')
+    .single()
+}
+
+export async function createChecklistItem(input: {
+  templateId: string
+  label: string
+  sortOrder: number
+  required: boolean
+}) {
+  return supabase.from('checklist_items').insert({
+    template_id: input.templateId,
+    label: input.label,
+    sort_order: input.sortOrder,
+    required: input.required,
+  })
+}
+
+export async function updateChecklistItem(
+  itemId: string,
+  fields: { label?: string; sort_order?: number; required?: boolean },
+) {
+  return supabase.from('checklist_items').update(fields).eq('id', itemId)
+}
+
+export async function deleteChecklistItem(itemId: string) {
+  return supabase.from('checklist_items').delete().eq('id', itemId)
 }
 
 export function parseTemplates(data: unknown) {

@@ -143,10 +143,10 @@ export function SitesPage({
       </section>
 
       {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-5">
-          <section className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-2xl">
-            <div className="flex items-start justify-between gap-4">
-              <div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/75 p-4 sm:p-5">
+          <section className="my-auto max-h-[calc(100svh-2rem)] w-full max-w-md overflow-y-auto rounded-2xl border border-border bg-card p-5 shadow-2xl sm:p-6">
+            <div className="flex items-start justify-between gap-3 sm:gap-4">
+              <div className="min-w-0">
                 <p className="text-sm text-muted-foreground">Novo cadastro</p>
                 <h3 className="mt-1 text-xl font-bold">Cadastrar obra</h3>
                 <p className="mt-1 text-xs text-muted-foreground">
@@ -157,7 +157,7 @@ export function SitesPage({
               <button
                 type="button"
                 onClick={onCloseModal}
-                className="rounded-lg p-2 text-muted-foreground hover:bg-accent hover:text-foreground"
+                className="shrink-0 rounded-lg p-2 text-muted-foreground hover:bg-accent hover:text-foreground"
               >
                 <X size={20} />
               </button>
@@ -215,7 +215,7 @@ export function SitesPage({
                 <button
                   type="button"
                   onClick={onCloseModal}
-                  className="rounded-lg border border-border px-4 py-3 text-sm font-medium text-foreground hover:bg-accent"
+                  className="w-full rounded-lg border border-border px-4 py-3 text-sm font-medium text-foreground hover:bg-accent sm:w-auto"
                 >
                   Cancelar
                 </button>
@@ -223,7 +223,7 @@ export function SitesPage({
                 <button
                   type="submit"
                   disabled={newSiteLoading}
-                  className="rounded-lg bg-red-600 px-5 py-3 text-sm font-semibold text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="w-full rounded-lg bg-red-600 px-5 py-3 text-sm font-semibold text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
                 >
                   {newSiteLoading ? 'Salvando...' : 'Cadastrar obra'}
                 </button>
