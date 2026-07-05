@@ -2192,6 +2192,7 @@ export default function App() {
       void loadProfiles()
       void loadTickets()
       void loadParts()
+      void loadFleet()
       void loadReportsData()
     }
   }
@@ -3149,6 +3150,7 @@ export default function App() {
                 events={dashboardEvents}
                 profiles={profiles}
                 clients={clients}
+                equipmentFleet={equipmentFleet}
                 siteLabels={dashboardSiteLabels}
                 equipmentLabels={dashboardEquipmentLabels}
                 approvals={reportApprovals}
