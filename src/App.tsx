@@ -19,9 +19,11 @@ import {
 } from '@/features/equipment/api'
 import {
   deleteClientTicket,
+  deleteGestorTicket,
   fetchTicketAttachments,
   insertTicketEvent,
   parseAttachments,
+  updateGestorTicket,
   uploadTicketAttachment,
 } from '@/features/tickets/api'
 import {
@@ -54,6 +56,15 @@ import {
   registerPartMovement,
   updatePart,
 } from '@/features/inventory/api'
+import {
+  CLIENT_SELECT_COLUMNS,
+  TEST_CLIENT_FORM,
+  clientFormToPayload,
+  clientToForm,
+  emptyClientForm,
+  validateClientForm,
+  type ClientFormValues,
+} from '@/features/clients/api'
 import { createManagedUser } from '@/features/users/api'
 import {
   fetchDashboardEvents,
@@ -83,7 +94,7 @@ import type {
   TicketStatus,
   UserRole,
 } from '@/types'
-import { TEST_CLIENT_NAME, isMaintenanceRole } from '@/types'
+import { isMaintenanceRole } from '@/types'
 
 const LoginBackground = lazy(() =>
   import('@/components/auth/login-background').then((module) => ({
@@ -201,11 +212,11 @@ export default function App() {
   const [clientsError, setClientsError] = useState('')
 
   const [newClientOpen, setNewClientOpen] = useState(false)
-  const [newClientName, setNewClientName] = useState('')
+  const [newClientForm, setNewClientForm] = useState<ClientFormValues>(emptyClientForm())
   const [newClientLoading, setNewClientLoading] = useState(false)
   const [newClientMessage, setNewClientMessage] = useState('')
   const [editClientTarget, setEditClientTarget] = useState<Client | null>(null)
-  const [editClientName, setEditClientName] = useState('')
+  const [editClientForm, setEditClientForm] = useState<ClientFormValues>(emptyClientForm())
   const [editClientLoading, setEditClientLoading] = useState(false)
   const [editClientMessage, setEditClientMessage] = useState('')
   const [deactivateClientTarget, setDeactivateClientTarget] = useState<Client | null>(
@@ -293,6 +304,26 @@ export default function App() {
     useState<TicketPriority>('media')
   const [newTicketLoading, setNewTicketLoading] = useState(false)
   const [newTicketMessage, setNewTicketMessage] = useState('')
+
+  const [editGestorTicket, setEditGestorTicket] = useState<Ticket | null>(null)
+  const [editGestorClientId, setEditGestorClientId] = useState('')
+  const [editGestorSiteId, setEditGestorSiteId] = useState('')
+  const [editGestorEquipmentId, setEditGestorEquipmentId] = useState('')
+  const [editGestorTitle, setEditGestorTitle] = useState('')
+  const [editGestorDescription, setEditGestorDescription] = useState('')
+  const [editGestorPriority, setEditGestorPriority] =
+    useState<TicketPriority>('media')
+  const [editGestorLoading, setEditGestorLoading] = useState(false)
+  const [editGestorMessage, setEditGestorMessage] = useState('')
+  const [editGestorFormSites, setEditGestorFormSites] = useState<Site[]>([])
+  const [editGestorFormEquipment, setEditGestorFormEquipment] = useState<
+    Equipment[]
+  >([])
+
+  const [deleteGestorTicketTarget, setDeleteGestorTicketTarget] =
+    useState<Ticket | null>(null)
+  const [deleteGestorLoading, setDeleteGestorLoading] = useState(false)
+  const [deleteGestorMessage, setDeleteGestorMessage] = useState('')
 
   const [ticketFormSites, setTicketFormSites] = useState<Site[]>([])
   const [ticketFormEquipment, setTicketFormEquipment] = useState<Equipment[]>([])
@@ -408,7 +439,7 @@ export default function App() {
 
     const { data, error } = await supabase
       .from('clients')
-      .select('id, name, active, created_at')
+      .select(CLIENT_SELECT_COLUMNS)
       .order('name', { ascending: true })
 
     setClientsLoading(false)
@@ -858,7 +889,7 @@ export default function App() {
     setActivePage('dashboard')
     setClients([])
     setNewClientOpen(false)
-    setNewClientName('')
+    setNewClientForm(emptyClientForm())
     setNewClientMessage('')
     setViewingClient(null)
     setSites([])
@@ -883,11 +914,11 @@ export default function App() {
     setTicketEvents([])
   }
 
-  async function createClient(name: string) {
-    const trimmedName = name.trim()
+  async function createClient(form: ClientFormValues) {
+    const validationError = validateClientForm(form)
 
-    if (trimmedName.length < 2) {
-      setNewClientMessage('Digite um nome com pelo menos 2 caracteres.')
+    if (validationError) {
+      setNewClientMessage(validationError)
       return false
     }
 
@@ -895,7 +926,7 @@ export default function App() {
     setNewClientMessage('')
 
     const { error } = await supabase.from('clients').insert({
-      name: trimmedName,
+      ...clientFormToPayload(form),
       active: true,
     })
 
@@ -909,7 +940,7 @@ export default function App() {
       return false
     }
 
-    setNewClientName('')
+    setNewClientForm(emptyClientForm())
     setNewClientOpen(false)
     await loadClients()
     return true
@@ -917,36 +948,36 @@ export default function App() {
 
   async function handleCreateClient(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    await createClient(newClientName)
+    await createClient(newClientForm)
   }
 
   async function handleCreateTestClient() {
-    setNewClientName(TEST_CLIENT_NAME)
+    setNewClientForm(TEST_CLIENT_FORM)
     setNewClientMessage('')
     setNewClientOpen(true)
   }
 
-  function openNewClientModal(prefillName = '') {
-    setNewClientName(prefillName)
+  function openNewClientModal() {
+    setNewClientForm(emptyClientForm())
     setNewClientMessage('')
     setNewClientOpen(true)
   }
 
   function closeNewClientModal() {
-    setNewClientName('')
+    setNewClientForm(emptyClientForm())
     setNewClientMessage('')
     setNewClientOpen(false)
   }
 
   function openEditClientModal(client: Client) {
     setEditClientTarget(client)
-    setEditClientName(client.name)
+    setEditClientForm(clientToForm(client))
     setEditClientMessage('')
   }
 
   function closeEditClientModal() {
     setEditClientTarget(null)
-    setEditClientName('')
+    setEditClientForm(emptyClientForm())
     setEditClientMessage('')
   }
 
@@ -955,19 +986,21 @@ export default function App() {
 
     if (!editClientTarget) return
 
-    const trimmedName = editClientName.trim()
+    const validationError = validateClientForm(editClientForm)
 
-    if (trimmedName.length < 2) {
-      setEditClientMessage('Digite um nome com pelo menos 2 caracteres.')
+    if (validationError) {
+      setEditClientMessage(validationError)
       return
     }
 
     setEditClientLoading(true)
     setEditClientMessage('')
 
+    const payload = clientFormToPayload(editClientForm)
+
     const { error } = await supabase
       .from('clients')
-      .update({ name: trimmedName })
+      .update(payload)
       .eq('id', editClientTarget.id)
 
     setEditClientLoading(false)
@@ -981,7 +1014,10 @@ export default function App() {
     }
 
     if (viewingClient?.id === editClientTarget.id) {
-      setViewingClient({ ...viewingClient, name: trimmedName })
+      setViewingClient({
+        ...viewingClient,
+        ...payload,
+      })
     }
 
     closeEditClientModal()
@@ -1546,6 +1582,173 @@ export default function App() {
     )
 
     closeNewTicketModal()
+    await loadTickets(ticketStatusFilter)
+  }
+
+  async function openEditGestorTicketModal(ticket: Ticket) {
+    setEditGestorTicket(ticket)
+    setEditGestorClientId(ticket.client_id)
+    setEditGestorSiteId(ticket.site_id ?? '')
+    setEditGestorEquipmentId(ticket.equipment_id ?? '')
+    setEditGestorTitle(ticket.title)
+    setEditGestorDescription(ticket.description)
+    setEditGestorPriority(ticket.priority)
+    setEditGestorMessage('')
+    await loadEditGestorFormData(ticket.client_id)
+  }
+
+  function closeEditGestorTicketModal() {
+    setEditGestorTicket(null)
+    setEditGestorMessage('')
+  }
+
+  async function loadEditGestorFormData(clientId: string) {
+    if (!clientId) {
+      setEditGestorFormSites([])
+      setEditGestorFormEquipment([])
+      return
+    }
+
+    const [sites, equipmentResult] = await Promise.all([
+      loadEquipmentSitesForClient(clientId),
+      fetchAllocatedEquipmentForClient(clientId),
+    ])
+
+    setEditGestorFormSites(sites)
+    setEditGestorFormEquipment(equipmentResult.data)
+  }
+
+  async function selectEditGestorClient(clientId: string) {
+    setEditGestorClientId(clientId)
+    setEditGestorSiteId('')
+    setEditGestorEquipmentId('')
+    await loadEditGestorFormData(clientId)
+  }
+
+  async function handleUpdateGestorTicket(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+
+    if (!editGestorTicket || !profile) return
+
+    const title = editGestorTitle.trim()
+    const description = editGestorDescription.trim()
+
+    if (!editGestorClientId) {
+      setEditGestorMessage('Selecione o cliente.')
+      return
+    }
+
+    if (title.length < 3) {
+      setEditGestorMessage('O título deve ter pelo menos 3 caracteres.')
+      return
+    }
+
+    if (description.length < 3) {
+      setEditGestorMessage('A descrição deve ter pelo menos 3 caracteres.')
+      return
+    }
+
+    setEditGestorLoading(true)
+    setEditGestorMessage('')
+
+    const { data: updatedTicket, error } = await updateGestorTicket({
+      ticketId: editGestorTicket.id,
+      clientId: editGestorClientId,
+      siteId: editGestorSiteId || null,
+      equipmentId: editGestorEquipmentId || null,
+      title,
+      description,
+      priority: editGestorPriority,
+    })
+
+    setEditGestorLoading(false)
+
+    if (error || !updatedTicket) {
+      setEditGestorMessage(
+        error?.message ||
+          'Não foi possível atualizar o chamado. Verifique as policies do Supabase.',
+      )
+      return
+    }
+
+    const changes: string[] = []
+
+    if (editGestorTicket.client_id !== editGestorClientId) {
+      changes.push('cliente atualizado')
+    }
+    if ((editGestorTicket.site_id ?? '') !== (editGestorSiteId || '')) {
+      changes.push('obra atualizada')
+    }
+    if ((editGestorTicket.equipment_id ?? '') !== (editGestorEquipmentId || '')) {
+      changes.push('equipamento atualizado')
+    }
+    if (editGestorTicket.title !== title) changes.push('título atualizado')
+    if (editGestorTicket.description !== description) {
+      changes.push('descrição atualizada')
+    }
+    if (editGestorTicket.priority !== editGestorPriority) {
+      changes.push('prioridade atualizada')
+    }
+
+    if (changes.length > 0) {
+      await insertTicketEvent(
+        editGestorTicket.id,
+        'atualizacao',
+        `Chamado atualizado pelo gestor: ${changes.join(' · ')}`,
+        profile.id,
+      )
+    }
+
+    closeEditGestorTicketModal()
+    await loadTickets(ticketStatusFilter)
+
+    if (viewingTicket?.id === updatedTicket.id) {
+      setViewingTicket(updatedTicket)
+    }
+  }
+
+  function openDeleteGestorTicketModal(ticket: Ticket) {
+    setDeleteGestorTicketTarget(ticket)
+    setDeleteGestorMessage('')
+  }
+
+  function closeDeleteGestorTicketModal() {
+    setDeleteGestorTicketTarget(null)
+    setDeleteGestorMessage('')
+  }
+
+  async function handleDeleteGestorTicket() {
+    if (!deleteGestorTicketTarget) return
+
+    setDeleteGestorLoading(true)
+    setDeleteGestorMessage('')
+
+    const { data, error } = await deleteGestorTicket(deleteGestorTicketTarget.id)
+
+    setDeleteGestorLoading(false)
+
+    if (error) {
+      const message = error.message || 'Não foi possível excluir o chamado.'
+      setDeleteGestorMessage(
+        message.includes('policy') || message.includes('permission')
+          ? 'Permissão de exclusão ainda não aplicada no Supabase. Execute o arquivo supabase/gestor-ticket-actions.sql no SQL Editor.'
+          : message,
+      )
+      return
+    }
+
+    if (!data?.length) {
+      setDeleteGestorMessage(
+        'O chamado não foi excluído. Execute o arquivo supabase/gestor-ticket-actions.sql no SQL Editor do Supabase.',
+      )
+      return
+    }
+
+    if (viewingTicket?.id === deleteGestorTicketTarget.id) {
+      backToTicketsList()
+    }
+
+    closeDeleteGestorTicketModal()
     await loadTickets(ticketStatusFilter)
   }
 
@@ -2929,11 +3132,11 @@ export default function App() {
                   loading={clientsLoading}
                   error={clientsError}
                   modalOpen={newClientOpen}
-                  newClientName={newClientName}
+                  newClientForm={newClientForm}
                   newClientLoading={newClientLoading}
                   newClientMessage={newClientMessage}
                   editClient={editClientTarget}
-                  editClientName={editClientName}
+                  editClientForm={editClientForm}
                   editClientLoading={editClientLoading}
                   editClientMessage={editClientMessage}
                   deactivateClient={deactivateClientTarget}
@@ -2941,13 +3144,17 @@ export default function App() {
                   deactivateClientMessage={deactivateClientMessage}
                   onOpenModal={() => openNewClientModal()}
                   onCloseModal={closeNewClientModal}
-                  onNewClientNameChange={setNewClientName}
+                  onNewClientFormChange={(patch) =>
+                    setNewClientForm((current) => ({ ...current, ...patch }))
+                  }
                   onCreateClient={handleCreateClient}
                   onCreateTestClient={handleCreateTestClient}
                   onOpenClient={openClientSites}
                   onOpenEditClient={openEditClientModal}
                   onCloseEditClient={closeEditClientModal}
-                  onEditClientNameChange={setEditClientName}
+                  onEditClientFormChange={(patch) =>
+                    setEditClientForm((current) => ({ ...current, ...patch }))
+                  }
                   onUpdateClient={handleUpdateClient}
                   onOpenDeactivateClient={openDeactivateClientModal}
                   onCloseDeactivateClient={closeDeactivateClientModal}
@@ -3019,6 +3226,34 @@ export default function App() {
                   onNewPriorityChange={setNewTicketPriority}
                   onCreateTicket={handleCreateTicket}
                   onOpenTicket={openTicketDetail}
+                  editTicket={editGestorTicket}
+                  editClientId={editGestorClientId}
+                  editSiteId={editGestorSiteId}
+                  editEquipmentId={editGestorEquipmentId}
+                  editTitle={editGestorTitle}
+                  editDescription={editGestorDescription}
+                  editPriority={editGestorPriority}
+                  editLoading={editGestorLoading}
+                  editMessage={editGestorMessage}
+                  editFormSites={editGestorFormSites}
+                  editFormEquipment={editGestorFormEquipment}
+                  onOpenEditTicket={(ticket) => void openEditGestorTicketModal(ticket)}
+                  onCloseEditTicket={closeEditGestorTicketModal}
+                  onSelectEditClient={(clientId) =>
+                    void selectEditGestorClient(clientId)
+                  }
+                  onEditSiteChange={setEditGestorSiteId}
+                  onEditEquipmentChange={setEditGestorEquipmentId}
+                  onEditTitleChange={setEditGestorTitle}
+                  onEditDescriptionChange={setEditGestorDescription}
+                  onEditPriorityChange={setEditGestorPriority}
+                  onUpdateTicket={handleUpdateGestorTicket}
+                  deleteTicket={deleteGestorTicketTarget}
+                  deleteLoading={deleteGestorLoading}
+                  deleteMessage={deleteGestorMessage}
+                  onOpenDeleteTicket={openDeleteGestorTicketModal}
+                  onCloseDeleteTicket={closeDeleteGestorTicketModal}
+                  onDeleteTicket={() => void handleDeleteGestorTicket()}
                 />
               ))}
 

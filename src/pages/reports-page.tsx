@@ -22,6 +22,7 @@ import {
   StatusDonutChart,
 } from '@/components/dashboard/dashboard-charts'
 import { approvalDecisionLabel } from '@/features/tickets/approvals-api'
+import { formatCnpj } from '@/features/clients/api'
 import { isPartBelowMinimum } from '@/features/inventory/api'
 import { computeDashboardMetrics, isTicketSlaCompliant } from '@/lib/dashboard-stats'
 import { formatDateTime } from '@/lib/format'
@@ -833,6 +834,13 @@ export function ReportsPage({
 
       const clientRowsExport = filteredClients.map((client) => [
         client.name,
+        client.legal_name ?? '',
+        client.cnpj ? formatCnpj(client.cnpj) : '',
+        client.city && client.state_code
+          ? `${client.city}/${client.state_code}`
+          : client.city ?? '',
+        client.contact_name ?? '',
+        client.contact_email ?? '',
         client.active ? 'Ativo' : 'Inativo',
         formatDateTime(client.created_at),
         profiles.filter((profile) => profile.client_id === client.id).length,
@@ -868,7 +876,12 @@ export function ReportsPage({
           'Clientes',
           'Empresas cadastradas, status atual e vínculos operacionais',
           [
-            'Cliente',
+            'Nome fantasia',
+            'Razão social',
+            'CNPJ',
+            'Cidade/UF',
+            'Contato',
+            'E-mail',
             'Status',
             'Cadastro',
             'Usuários vinculados',

@@ -227,3 +227,38 @@ export async function updateClientTicket(input: UpdateClientTicketInput) {
 export async function deleteClientTicket(ticketId: string) {
   return supabase.from('tickets').delete().eq('id', ticketId).select('id')
 }
+
+export type UpdateGestorTicketInput = {
+  ticketId: string
+  clientId: string
+  siteId: string | null
+  equipmentId: string | null
+  title: string
+  description: string
+  priority: Ticket['priority']
+}
+
+export async function updateGestorTicket(input: UpdateGestorTicketInput) {
+  const { data, error } = await supabase
+    .from('tickets')
+    .update({
+      client_id: input.clientId,
+      site_id: input.siteId,
+      equipment_id: input.equipmentId,
+      title: input.title,
+      description: input.description,
+      priority: input.priority,
+    })
+    .eq('id', input.ticketId)
+    .select(TICKET_SELECT_COLUMNS)
+    .single()
+
+  return {
+    data: error ? null : (data as Ticket),
+    error,
+  }
+}
+
+export async function deleteGestorTicket(ticketId: string) {
+  return supabase.from('tickets').delete().eq('id', ticketId).select('id')
+}

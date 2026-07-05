@@ -35,6 +35,17 @@ export type AppPage =
 export type Client = {
   id: string
   name: string
+  legal_name: string | null
+  cnpj: string | null
+  internal_code: string | null
+  state_registration: string | null
+  segment: string | null
+  contact_name: string | null
+  contact_email: string | null
+  contact_phone: string | null
+  city: string | null
+  state_code: string | null
+  notes: string | null
   active: boolean
   created_at: string
 }
