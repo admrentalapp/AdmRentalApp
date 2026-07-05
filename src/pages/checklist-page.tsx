@@ -31,16 +31,21 @@ import type {
   EquipmentWithAllocation,
 } from '@/types'
 
-type RunItemRow = ChecklistRunItem & {
-  checklist_items: Array<{
-    label: string
-    sort_order: number
-    required: boolean
-  }>
+type ChecklistItemMeta = {
+  label: string
+  sort_order: number
+  required: boolean
 }
 
-function checklistItemMeta(item: RunItemRow) {
-  return item.checklist_items[0] ?? null
+type RunItemRow = ChecklistRunItem & {
+  checklist_items: ChecklistItemMeta | ChecklistItemMeta[] | null
+}
+
+function checklistItemMeta(item: RunItemRow): ChecklistItemMeta | null {
+  const related = item.checklist_items
+  if (!related) return null
+  if (Array.isArray(related)) return related[0] ?? null
+  return related
 }
 
 function normalizeTemplateName(name: string) {
