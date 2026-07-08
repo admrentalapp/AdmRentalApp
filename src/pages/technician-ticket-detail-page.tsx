@@ -1,15 +1,23 @@
 import { type FormEvent } from 'react'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, CheckCircle2 } from 'lucide-react'
 import { PriorityBadge, StatusBadge } from '@/components/tickets/badges'
 import { AttachmentsSection } from '@/components/tickets/attachments-section'
 import {
   InspectionSection,
   type InspectionFormValues,
 } from '@/components/tickets/inspection-section'
+import { ServiceCompletionSection } from '@/components/tickets/service-completion-section'
 import { TicketRequestInfo } from '@/components/tickets/ticket-request-info'
 import { TicketEventsSection } from '@/components/tickets/ticket-events-section'
+import { canCompleteTicket } from '@/features/tickets/completions-api'
 import { formatDateTime } from '@/lib/format'
-import type { Attachment, Ticket, TicketEvent, TicketInspection } from '@/types'
+import type {
+  Attachment,
+  Ticket,
+  TicketEvent,
+  TicketInspection,
+  TicketServiceCompletion,
+} from '@/types'
 
 export function TechnicianTicketDetailPage({
   ticket,
@@ -32,6 +40,9 @@ export function TechnicianTicketDetailPage({
   inspectionSaveError,
   inspectionSaveSuccess,
   onSaveInspection,
+  serviceCompletion,
+  serviceCompletionLoading,
+  onOpenServiceCompletion,
   onBack,
   onEventMessageChange,
   onAddEvent,
@@ -56,10 +67,18 @@ export function TechnicianTicketDetailPage({
   inspectionSaveError: string
   inspectionSaveSuccess: string
   onSaveInspection: (values: InspectionFormValues) => void | Promise<void>
+  serviceCompletion: TicketServiceCompletion | null
+  serviceCompletionLoading: boolean
+  onOpenServiceCompletion: () => void
   onBack: () => void
   onEventMessageChange: (value: string) => void
   onAddEvent: (event: FormEvent<HTMLFormElement>) => void
 }) {
+  const showCompleteButton = canCompleteTicket(
+    ticket.status,
+    Boolean(serviceCompletion),
+  )
+
   return (
     <>
       <button
@@ -158,6 +177,33 @@ export function TechnicianTicketDetailPage({
           </button>
         </form>
       </section>
+
+      <ServiceCompletionSection
+        completion={serviceCompletion}
+        loading={serviceCompletionLoading}
+      />
+
+      {showCompleteButton && (
+        <section className="mt-6 rounded-2xl border border-red-200 bg-red-50 p-6 dark:border-red-950 dark:bg-red-950/20">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h4 className="font-bold text-foreground">Encerrar ordem de serviço</h4>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Colete as assinaturas do técnico e do cliente para concluir o
+                atendimento.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={onOpenServiceCompletion}
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-red-600 px-5 py-3 text-sm font-bold uppercase tracking-wide text-white hover:bg-red-700"
+            >
+              <CheckCircle2 size={18} />
+              Concluir serviço
+            </button>
+          </div>
+        </section>
+      )}
     </>
   )
 }

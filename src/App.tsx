@@ -3,6 +3,7 @@ import { AlertTriangle, ClipboardList, LogOut, Menu, Plus, Trash2, X } from 'luc
 import { AppLogo } from '@/components/shared/app-logo'
 import { ThemeToggle } from '@/components/theme/theme-toggle'
 import type { InspectionFormValues } from '@/components/tickets/inspection-section'
+import { ServiceCompletionModal } from '@/components/tickets/service-completion-modal'
 import { PriorityBadge, StatusBadge } from '@/components/tickets/badges'
 import { managerMenuItems } from '@/config/menu'
 import {
@@ -17,6 +18,11 @@ import {
   mergeEquipmentWithAllocations,
   updateFleetEquipment,
 } from '@/features/equipment/api'
+import {
+  completeTicketService,
+  fetchTicketServiceCompletion,
+  parseTicketServiceCompletion,
+} from '@/features/tickets/completions-api'
 import {
   deleteClientTicket,
   deleteGestorTicket,
@@ -90,6 +96,7 @@ import type {
   TicketApproval,
   TicketEvent,
   TicketInspection,
+  TicketServiceCompletion,
   TicketPriority,
   TicketStatus,
   UserRole,
@@ -366,6 +373,14 @@ export default function App() {
   const [ticketApprovalLoading, setTicketApprovalLoading] = useState(false)
   const [approvalSubmitLoading, setApprovalSubmitLoading] = useState(false)
   const [approvalSubmitError, setApprovalSubmitError] = useState('')
+
+  const [ticketServiceCompletion, setTicketServiceCompletion] =
+    useState<TicketServiceCompletion | null>(null)
+  const [ticketServiceCompletionLoading, setTicketServiceCompletionLoading] =
+    useState(false)
+  const [serviceCompletionOpen, setServiceCompletionOpen] = useState(false)
+  const [serviceCompletionLoading, setServiceCompletionLoading] = useState(false)
+  const [serviceCompletionError, setServiceCompletionError] = useState('')
 
   const [dashboardEvents, setDashboardEvents] = useState<TicketEvent[]>([])
   const [dashboardSiteLabels, setDashboardSiteLabels] = useState(
@@ -664,6 +679,21 @@ export default function App() {
     }
 
     setTicketApproval(parseTicketApproval(data))
+  }, [])
+
+  const loadTicketServiceCompletion = useCallback(async (ticketId: string) => {
+    setTicketServiceCompletionLoading(true)
+
+    const { data, error } = await fetchTicketServiceCompletion(ticketId)
+
+    setTicketServiceCompletionLoading(false)
+
+    if (error) {
+      setTicketServiceCompletion(null)
+      return
+    }
+
+    setTicketServiceCompletion(parseTicketServiceCompletion(data))
   }, [])
 
   const loadParts = useCallback(async () => {
@@ -1768,12 +1798,16 @@ export default function App() {
     setInspectionSaveSuccess('')
     setTicketApproval(null)
     setApprovalSubmitError('')
+    setTicketServiceCompletion(null)
+    setServiceCompletionOpen(false)
+    setServiceCompletionError('')
 
     const detailLookups: Promise<unknown>[] = [
       loadTicketEvents(ticket.id),
       loadTicketAttachments(ticket.id),
       loadTicketInspection(ticket.id),
       loadTicketApproval(ticket.id),
+      loadTicketServiceCompletion(ticket.id),
     ]
 
     if (profile?.role !== 'cliente') {
@@ -1832,6 +1866,71 @@ export default function App() {
     setInspectionSaveSuccess('')
     setTicketApproval(null)
     setApprovalSubmitError('')
+    setTicketServiceCompletion(null)
+    setServiceCompletionOpen(false)
+    setServiceCompletionError('')
+  }
+
+  function openServiceCompletionModal() {
+    setServiceCompletionError('')
+    setServiceCompletionOpen(true)
+  }
+
+  function closeServiceCompletionModal() {
+    setServiceCompletionOpen(false)
+    setServiceCompletionError('')
+  }
+
+  async function handleCompleteService(input: {
+    technicianSignatureDataUrl: string
+    clientSignatureDataUrl: string
+    clientSignerName: string
+    equipmentReady: boolean
+    notes: string
+  }) {
+    if (!viewingTicket || !profile) return
+
+    setServiceCompletionLoading(true)
+    setServiceCompletionError('')
+
+    const { error } = await completeTicketService({
+      ticketId: viewingTicket.id,
+      ...input,
+    })
+
+    setServiceCompletionLoading(false)
+
+    if (error) {
+      setServiceCompletionError(
+        error.message ||
+          'Não foi possível concluir o serviço. Execute supabase/ticket-service-completions.sql.',
+      )
+      return
+    }
+
+    const closedAt = new Date().toISOString()
+    const updatedTicket: Ticket = {
+      ...viewingTicket,
+      status: 'concluido',
+      closed_at: closedAt,
+      updated_at: closedAt,
+    }
+
+    setViewingTicket(updatedTicket)
+    closeServiceCompletionModal()
+
+    await Promise.all([
+      loadTicketServiceCompletion(viewingTicket.id),
+      loadTicketEvents(viewingTicket.id),
+    ])
+
+    if (isMaintenanceRole(profile.role)) {
+      await loadTechnicianTickets(profile.id)
+    } else if (profile.role === 'gestor_adm') {
+      await loadTickets(ticketStatusFilter)
+    } else if (profile.role === 'cliente') {
+      await loadClientTickets()
+    }
   }
 
   async function handleClientTicketUpdated(updatedTicket: Ticket) {
@@ -2429,11 +2528,22 @@ export default function App() {
                 inspectionSaveError={inspectionSaveError}
                 inspectionSaveSuccess={inspectionSaveSuccess}
                 onSaveInspection={handleSaveInspection}
+                serviceCompletion={ticketServiceCompletion}
+                serviceCompletionLoading={ticketServiceCompletionLoading}
+                onOpenServiceCompletion={openServiceCompletionModal}
                 onBack={backToTicketsList}
                 onEventMessageChange={setTechEventMessage}
                 onAddEvent={handleTechnicianAddEvent}
               />
             </Suspense>
+
+            <ServiceCompletionModal
+              open={serviceCompletionOpen}
+              loading={serviceCompletionLoading}
+              error={serviceCompletionError}
+              onClose={closeServiceCompletionModal}
+              onSubmit={handleCompleteService}
+            />
           </div>
         </main>
       )
@@ -2639,6 +2749,8 @@ export default function App() {
                 approvalLoading={ticketApprovalLoading}
                 approvalSubmitLoading={approvalSubmitLoading}
                 approvalSubmitError={approvalSubmitError}
+                serviceCompletion={ticketServiceCompletion}
+                serviceCompletionLoading={ticketServiceCompletionLoading}
                 onRespondApproval={handleClientApproval}
                 onEditTicket={() => {
                   setClientDeleteError('')
@@ -3187,6 +3299,8 @@ export default function App() {
                   inspectionLoading={ticketInspectionLoading}
                   approval={ticketApproval}
                   approvalLoading={ticketApprovalLoading}
+                  serviceCompletion={ticketServiceCompletion}
+                  serviceCompletionLoading={ticketServiceCompletionLoading}
                   onBack={backToTicketsList}
                   onEditStatusChange={setEditTicketStatus}
                   onEditPriorityChange={setEditTicketPriority}

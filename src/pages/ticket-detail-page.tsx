@@ -3,6 +3,7 @@ import { ArrowLeft } from 'lucide-react'
 import { PriorityBadge, StatusBadge } from '@/components/tickets/badges'
 import { AttachmentsSection } from '@/components/tickets/attachments-section'
 import { InspectionSection } from '@/components/tickets/inspection-section'
+import { ServiceCompletionSection } from '@/components/tickets/service-completion-section'
 import { approvalDecisionLabel } from '@/features/tickets/approvals-api'
 import { TicketRequestInfo } from '@/components/tickets/ticket-request-info'
 import { TicketEventsSection } from '@/components/tickets/ticket-events-section'
@@ -16,6 +17,7 @@ import type {
   TicketApproval,
   TicketEvent,
   TicketInspection,
+  TicketServiceCompletion,
   TicketPriority,
   TicketStatus,
 } from '@/types'
@@ -45,6 +47,8 @@ export function TicketDetailPage({
   inspectionLoading,
   approval,
   approvalLoading,
+  serviceCompletion,
+  serviceCompletionLoading,
   onBack,
   onEditStatusChange,
   onEditPriorityChange,
@@ -73,6 +77,8 @@ export function TicketDetailPage({
   inspectionLoading: boolean
   approval: TicketApproval | null
   approvalLoading: boolean
+  serviceCompletion: TicketServiceCompletion | null
+  serviceCompletionLoading: boolean
   onBack: () => void
   onEditStatusChange: (status: TicketStatus) => void
   onEditPriorityChange: (priority: TicketPriority) => void
@@ -86,6 +92,10 @@ export function TicketDetailPage({
   )
   const inspectorName = inspection
     ? profiles.find((item) => item.id === inspection.inspector_id)?.full_name
+    : undefined
+  const completionTechnicianName = serviceCompletion
+    ? profiles.find((item) => item.id === serviceCompletion.technician_signed_by)
+        ?.full_name
     : undefined
 
   return (
@@ -190,6 +200,12 @@ export function TicketDetailPage({
         uploading={uploading}
         uploadError={uploadError}
         onUpload={onUpload}
+      />
+
+      <ServiceCompletionSection
+        completion={serviceCompletion}
+        loading={serviceCompletionLoading}
+        technicianName={completionTechnicianName}
       />
 
       <section className="mt-6 rounded-2xl border border-border bg-card p-6">

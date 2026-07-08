@@ -1,11 +1,10 @@
-import { useMemo, useRef, useState, type ReactNode } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import {
   AlertTriangle,
   CheckSquare,
   ClipboardList,
   Download,
   FileSpreadsheet,
-  FileText,
   Filter,
   Gauge,
   Package,
@@ -263,44 +262,6 @@ function downloadBlob(blob: Blob, filename: string) {
   }, 1000)
 }
 
-const PDF_CAPTURE_STYLE_PROPERTIES = [
-  'color',
-  'background-color',
-  'background-image',
-  'border-color',
-  'border-top-color',
-  'border-right-color',
-  'border-bottom-color',
-  'border-left-color',
-  'outline-color',
-  'text-decoration-color',
-  'box-shadow',
-  'fill',
-  'stroke',
-  'caret-color',
-] as const
-
-function inlinePdfSafeStyles(sourceRoot: HTMLElement, cloneRoot: HTMLElement) {
-  const sourceElements = [sourceRoot, ...Array.from(sourceRoot.querySelectorAll<HTMLElement>('*'))]
-  const cloneElements = [cloneRoot, ...Array.from(cloneRoot.querySelectorAll<HTMLElement>('*'))]
-
-  for (let index = 0; index < sourceElements.length; index += 1) {
-    const sourceElement = sourceElements[index]
-    const cloneElement = cloneElements[index]
-
-    if (!sourceElement || !cloneElement) continue
-
-    const computedStyle = window.getComputedStyle(sourceElement)
-
-    for (const property of PDF_CAPTURE_STYLE_PROPERTIES) {
-      const value = computedStyle.getPropertyValue(property)
-      if (value) {
-        cloneElement.style.setProperty(property, value)
-      }
-    }
-  }
-}
-
 function SectionCard({
   title,
   subtitle,
@@ -417,9 +378,7 @@ export function ReportsPage({
   const [status, setStatus] = useState('')
   const [priority, setPriority] = useState('')
   const [exporting, setExporting] = useState(false)
-  const [pdfExporting, setPdfExporting] = useState(false)
   const [exportError, setExportError] = useState('')
-  const reportContentRef = useRef<HTMLDivElement | null>(null)
 
   const clientMap = useMemo(
     () => new Map(clients.map((client) => [client.id, client.name])),
@@ -711,18 +670,6 @@ export function ReportsPage({
     [filteredTickets, clientMap, siteLabels, equipmentLabels, profileMap],
   )
 
-  const reportFilterSummary = useMemo(
-    () =>
-      [
-        `Período: ${PERIOD_LABELS[period]}`,
-        `Cliente: ${clientId ? clientMap.get(clientId) ?? clientId : 'Todos'}`,
-        `Técnico: ${technicianId ? profileMap.get(technicianId) ?? technicianId : 'Todos'}`,
-        `Status: ${status ? statusLabel(status as TicketStatus) : 'Todos'}`,
-        `Prioridade: ${priority ? priorityLabel(priority as TicketPriority) : 'Todas'}`,
-      ].join('  •  '),
-    [period, clientId, clientMap, technicianId, profileMap, status, priority],
-  )
-
   async function exportWorkbook() {
     setExporting(true)
     setExportError('')
@@ -928,123 +875,6 @@ export function ReportsPage({
     }
   }
 
-  async function exportPdf() {
-    if (!reportContentRef.current) {
-      setExportError('Não foi possível localizar a área do relatório para gerar o PDF.')
-      return
-    }
-
-    setPdfExporting(true)
-    setExportError('')
-
-    try {
-      const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
-        import('html2canvas-pro'),
-        import('jspdf'),
-      ])
-
-      const reportElement = reportContentRef.current
-      const canvas = await html2canvas(reportElement, {
-        backgroundColor: null,
-        useCORS: true,
-        logging: false,
-        scale: Math.max(2, window.devicePixelRatio || 1),
-        width: reportElement.scrollWidth,
-        height: reportElement.scrollHeight,
-        windowWidth: reportElement.scrollWidth,
-        windowHeight: reportElement.scrollHeight,
-        scrollX: 0,
-        scrollY: -window.scrollY,
-        ignoreElements: (element) =>
-          element instanceof HTMLElement && element.dataset.pdfHidden === 'true',
-        onclone: (documentClone) => {
-          documentClone
-            .querySelectorAll<HTMLElement>('[data-pdf-hidden="true"]')
-            .forEach((element) => {
-              element.style.display = 'none'
-            })
-
-          const clonedReportRoot = documentClone.querySelector<HTMLElement>('[data-pdf-root="true"]')
-          if (clonedReportRoot) {
-            inlinePdfSafeStyles(reportElement, clonedReportRoot)
-          }
-        },
-      })
-
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4',
-        compress: true,
-      })
-      const pageWidth = pdf.internal.pageSize.getWidth()
-      const pageHeight = pdf.internal.pageSize.getHeight()
-      const marginX = 10
-      const headerTop = 8
-      const headerHeight = 26
-      const footerHeight = 10
-      const contentTop = headerTop + headerHeight + 6
-      const contentWidth = pageWidth - marginX * 2
-      const contentHeightPerPage = pageHeight - contentTop - footerHeight - 6
-      const imageHeight = (canvas.height * contentWidth) / canvas.width
-      const totalPages = Math.max(1, Math.ceil(imageHeight / contentHeightPerPage))
-      const generatedAt = formatDateTime(new Date().toISOString())
-      const imageData = canvas.toDataURL('image/png')
-
-      const drawPdfFrame = (pageNumber: number) => {
-        pdf.setFillColor(15, 23, 42)
-        pdf.roundedRect(marginX, headerTop, contentWidth, headerHeight, 5, 5, 'F')
-        pdf.setFillColor(220, 38, 38)
-        pdf.roundedRect(marginX, headerTop, 3, headerHeight, 3, 3, 'F')
-        pdf.setTextColor(255, 255, 255)
-        pdf.setFontSize(18)
-        pdf.text('Relatório Gerencial ADM', marginX + 8, headerTop + 10)
-        pdf.setFontSize(9)
-        pdf.setTextColor(203, 213, 225)
-        pdf.text(`Gerado em ${generatedAt}`, marginX + 8, headerTop + 17)
-        pdf.text(reportFilterSummary, marginX + 8, headerTop + 22, {
-          maxWidth: contentWidth - 16,
-        })
-        pdf.setDrawColor(226, 232, 240)
-        pdf.setLineWidth(0.3)
-        pdf.line(marginX, pageHeight - footerHeight, pageWidth - marginX, pageHeight - footerHeight)
-        pdf.setTextColor(100, 116, 139)
-        pdf.setFontSize(9)
-        pdf.text(`Página ${pageNumber} de ${totalPages}`, pageWidth - marginX, pageHeight - 4, {
-          align: 'right',
-        })
-      }
-
-      for (let pageIndex = 0; pageIndex < totalPages; pageIndex += 1) {
-        if (pageIndex > 0) {
-          pdf.addPage()
-        }
-
-        drawPdfFrame(pageIndex + 1)
-
-        pdf.addImage(
-          imageData,
-          'PNG',
-          marginX,
-          contentTop - pageIndex * contentHeightPerPage,
-          contentWidth,
-          imageHeight,
-          undefined,
-          'FAST',
-        )
-      }
-
-      pdf.save(`relatorio-gerencial-${new Date().toISOString().slice(0, 10)}.pdf`)
-    } catch (error) {
-      console.error('Falha ao gerar PDF do relatório', error)
-      setExportError(
-        error instanceof Error ? error.message : 'Não foi possível gerar o PDF do relatório.',
-      )
-    } finally {
-      setPdfExporting(false)
-    }
-  }
-
   if (loading) {
     return (
       <div className="flex min-h-64 items-center justify-center rounded-2xl border border-border bg-card text-sm text-muted-foreground">
@@ -1054,7 +884,7 @@ export function ReportsPage({
   }
 
   return (
-    <div ref={reportContentRef} data-pdf-root="true">
+    <div>
       <section className="relative overflow-hidden rounded-3xl border border-border/80 bg-linear-to-br from-card via-card/85 to-background p-7">
         <div className="pointer-events-none absolute -right-24 -top-28 h-80 w-80 rounded-full bg-red-600/10 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-32 left-8 h-72 w-72 rounded-full bg-sky-600/5 blur-3xl" />
@@ -1070,7 +900,7 @@ export function ReportsPage({
             </h3>
             <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
               Indicadores executivos, gargalos operacionais, saúde do estoque,
-              conformidade de checklist e exportação profissional em Excel e PDF.
+              conformidade de checklist e exportação profissional em Excel.
             </p>
             {exportError && (
               <p className="mt-3 rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-300">
@@ -1079,20 +909,7 @@ export function ReportsPage({
             )}
           </div>
 
-          <div
-            data-pdf-hidden="true"
-            className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:justify-end"
-          >
-            <button
-              type="button"
-              disabled={pdfExporting}
-              onClick={() => void exportPdf()}
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-linear-to-r from-slate-950 via-slate-900 to-slate-800 px-4 py-2.5 text-sm font-medium text-white shadow-lg shadow-slate-950/20 transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-70 dark:from-slate-100 dark:via-white dark:to-slate-200 dark:text-slate-950"
-            >
-              <FileText size={16} />
-              {pdfExporting ? 'Gerando PDF...' : 'Gerar PDF'}
-            </button>
-
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:justify-end">
             <button
               type="button"
               disabled={exporting}

@@ -4,7 +4,6 @@ import {
   ChevronRight,
   ClipboardList,
   Clock,
-  Download,
   Gauge,
   PieChart,
   Timer,
@@ -23,50 +22,10 @@ import {
   computeDashboardMetrics,
   SLA_TRIAGE_HOURS,
   type DashboardMetrics,
-  type DashboardRecentTicket,
 } from '@/lib/dashboard-stats'
 import { formatDateTime } from '@/lib/format'
 import type { LucideIcon } from 'lucide-react'
 import type { ManagedProfile, Ticket, TicketEvent } from '@/types'
-
-function exportRecentTicketsCsv(rows: DashboardRecentTicket[]) {
-  const header = [
-    'OS',
-    'Equipamento',
-    'Obra',
-    'Abertura',
-    'Prioridade',
-    'Status',
-    'Responsavel',
-    'Titulo',
-  ]
-
-  const lines = rows.map((row) =>
-    [
-      row.ticketNumber,
-      row.equipmentLabel,
-      row.siteLabel,
-      formatDateTime(row.openedAt),
-      row.priority,
-      row.status,
-      row.responsibleName,
-      row.title,
-    ]
-      .map((value) => `"${String(value).replace(/"/g, '""')}"`)
-      .join(','),
-  )
-
-  const blob = new Blob([[header.join(','), ...lines].join('\n')], {
-    type: 'text/csv;charset=utf-8;',
-  })
-
-  const url = URL.createObjectURL(blob)
-  const link = document.createElement('a')
-  link.href = url
-  link.download = `chamados-recentes-${new Date().toISOString().slice(0, 10)}.csv`
-  link.click()
-  URL.revokeObjectURL(url)
-}
 
 function SectionCard({
   title,
@@ -181,31 +140,18 @@ export function DashboardPage({
         <div className="pointer-events-none absolute -right-20 -top-24 h-72 w-72 rounded-full bg-red-600/10 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-32 left-10 h-72 w-72 rounded-full bg-sky-600/5 blur-3xl" />
 
-        <div className="relative flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <span className="inline-flex items-center gap-2 rounded-full border border-border/80 bg-background/60 px-3 py-1 text-xs font-medium text-muted-foreground">
-              <Activity size={13} className="text-red-600 dark:text-red-400" />
-              Visão Geral Operacional
-            </span>
-            <h3 className="mt-4 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-              Painel de Controle
-            </h3>
-            <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-              Dados em tempo real, decisões inteligentes e acompanhamento de SLA
-              de triagem ({SLA_TRIAGE_HOURS}h).
-            </p>
-          </div>
-
-          <div className="flex flex-wrap gap-3">
-            <button
-              type="button"
-              onClick={() => exportRecentTicketsCsv(metrics.recentTickets)}
-              className="inline-flex items-center gap-2 rounded-xl border border-border bg-background/60 px-4 py-2.5 text-sm font-medium text-foreground transition hover:bg-accent"
-            >
-              <Download size={16} />
-              Exportar
-            </button>
-          </div>
+        <div className="relative">
+          <span className="inline-flex items-center gap-2 rounded-full border border-border/80 bg-background/60 px-3 py-1 text-xs font-medium text-muted-foreground">
+            <Activity size={13} className="text-red-600 dark:text-red-400" />
+            Visão Geral Operacional
+          </span>
+          <h3 className="mt-4 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+            Painel de Controle
+          </h3>
+          <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+            Dados em tempo real, decisões inteligentes e acompanhamento de SLA
+            de triagem ({SLA_TRIAGE_HOURS}h).
+          </p>
         </div>
       </section>
 

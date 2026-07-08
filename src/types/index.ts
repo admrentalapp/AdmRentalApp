@@ -166,6 +166,19 @@ export type TicketInspection = {
   updated_at: string
 }
 
+export type TicketServiceCompletion = {
+  id: string
+  ticket_id: string
+  technician_signature_path: string
+  client_signature_path: string
+  technician_signed_by: string
+  client_signer_name: string
+  equipment_ready: boolean
+  notes: string | null
+  completed_at: string
+  created_at: string
+}
+
 export const INSPECTION_CAUSES: InspectionCause[] = [
   'desgaste_natural',
   'operacao_inadequada',
