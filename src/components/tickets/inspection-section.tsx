@@ -4,7 +4,7 @@ import {
   inspectionResponsibilityLabel,
   recommendedStatusForResponsibility,
 } from '@/lib/inspections'
-import { formatDateTime } from '@/lib/format'
+import { formatDateTime, formatHourMeter } from '@/lib/format'
 import { statusLabel } from '@/lib/tickets'
 import type {
   InspectionCause,
@@ -32,6 +32,7 @@ export type InspectionFormValues = {
   causeNotes: string
   responsibility: InspectionResponsibility
   recommendation: string
+  hourMeterReading: string
 }
 
 function buildInitialValues(inspection: TicketInspection | null): InspectionFormValues {
@@ -43,6 +44,11 @@ function buildInitialValues(inspection: TicketInspection | null): InspectionForm
       causeNotes: inspection.cause_notes ?? '',
       responsibility: inspection.responsibility,
       recommendation: inspection.recommendation,
+      hourMeterReading:
+        inspection.hour_meter_reading !== null &&
+        inspection.hour_meter_reading !== undefined
+          ? String(inspection.hour_meter_reading)
+          : '',
     }
   }
 
@@ -53,6 +59,7 @@ function buildInitialValues(inspection: TicketInspection | null): InspectionForm
     causeNotes: '',
     responsibility: 'adm',
     recommendation: '',
+    hourMeterReading: '',
   }
 }
 
@@ -182,6 +189,36 @@ export function InspectionSection({
               }
               className="w-full rounded-lg border border-border bg-background px-4 py-3 text-foreground outline-none focus:border-red-500"
             />
+          </div>
+
+          <div>
+            <label
+              htmlFor="hourMeterReading"
+              className="mb-2 block text-sm font-medium text-foreground"
+            >
+              Horímetro na inspeção{' '}
+              <span className="font-normal text-muted-foreground">(horas)</span>
+            </label>
+            <input
+              id="hourMeterReading"
+              type="number"
+              min={0}
+              step={0.1}
+              inputMode="decimal"
+              value={values.hourMeterReading}
+              onChange={(event) =>
+                setValues((current) => ({
+                  ...current,
+                  hourMeterReading: event.target.value,
+                }))
+              }
+              placeholder="Ex.: 1250.5"
+              className="w-full rounded-lg border border-border bg-background px-4 py-3 text-foreground outline-none placeholder:text-muted-foreground focus:border-red-500"
+            />
+            <p className="mt-2 text-xs text-muted-foreground">
+              Ao salvar, atualiza o horímetro do equipamento e registra no
+              histórico.
+            </p>
           </div>
 
           <div>
@@ -354,6 +391,14 @@ export function InspectionSection({
                   <p className="mt-1 text-sm text-foreground">{inspectorName}</p>
                 </div>
               )}
+              <div>
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                  Horímetro
+                </p>
+                <p className="mt-1 text-sm text-foreground">
+                  {formatHourMeter(inspection.hour_meter_reading)}
+                </p>
+              </div>
             </div>
 
             <div>

@@ -8,6 +8,7 @@ import {
   Wrench,
   X,
 } from 'lucide-react'
+import { formatDateTime, formatHourMeter } from '@/lib/format'
 import type { Client, EquipmentWithAllocation, Site } from '@/types'
 
 export function EquipmentPage({
@@ -22,12 +23,14 @@ export function EquipmentPage({
   newAssetTag,
   newDescription,
   newSerial,
+  newHourMeter,
   newLoading,
   newMessage,
   editEquipment,
   editAssetTag,
   editDescription,
   editSerial,
+  editHourMeter,
   editLoading,
   editMessage,
   deactivateEquipment,
@@ -46,12 +49,14 @@ export function EquipmentPage({
   onNewAssetTagChange,
   onNewDescriptionChange,
   onNewSerialChange,
+  onNewHourMeterChange,
   onCreateEquipment,
   onOpenEditModal,
   onCloseEditModal,
   onEditAssetTagChange,
   onEditDescriptionChange,
   onEditSerialChange,
+  onEditHourMeterChange,
   onUpdateEquipment,
   onOpenDeactivateModal,
   onCloseDeactivateModal,
@@ -74,12 +79,14 @@ export function EquipmentPage({
   newAssetTag: string
   newDescription: string
   newSerial: string
+  newHourMeter: string
   newLoading: boolean
   newMessage: string
   editEquipment: EquipmentWithAllocation | null
   editAssetTag: string
   editDescription: string
   editSerial: string
+  editHourMeter: string
   editLoading: boolean
   editMessage: string
   deactivateEquipment: EquipmentWithAllocation | null
@@ -98,12 +105,14 @@ export function EquipmentPage({
   onNewAssetTagChange: (value: string) => void
   onNewDescriptionChange: (value: string) => void
   onNewSerialChange: (value: string) => void
+  onNewHourMeterChange: (value: string) => void
   onCreateEquipment: (event: FormEvent<HTMLFormElement>) => void
   onOpenEditModal: (item: EquipmentWithAllocation) => void
   onCloseEditModal: () => void
   onEditAssetTagChange: (value: string) => void
   onEditDescriptionChange: (value: string) => void
   onEditSerialChange: (value: string) => void
+  onEditHourMeterChange: (value: string) => void
   onUpdateEquipment: (event: FormEvent<HTMLFormElement>) => void
   onOpenDeactivateModal: (item: EquipmentWithAllocation) => void
   onCloseDeactivateModal: () => void
@@ -299,6 +308,11 @@ export function EquipmentPage({
                       {item.serial_number
                         ? `Série: ${item.serial_number}`
                         : 'Sem número de série'}
+                      {' · '}
+                      Horímetro: {formatHourMeter(item.hour_meter_current)}
+                      {item.hour_meter_updated_at
+                        ? ` (${formatDateTime(item.hour_meter_updated_at)})`
+                        : ''}
                     </p>
                     {item.allocation ? (
                       <p className="mt-2 text-xs text-sky-600 dark:text-sky-300">
@@ -444,6 +458,29 @@ export function EquipmentPage({
                 />
               </div>
 
+              <div>
+                <label
+                  htmlFor="equipmentHourMeter"
+                  className="mb-2 block text-sm font-medium text-foreground"
+                >
+                  Horímetro atual{' '}
+                  <span className="font-normal text-muted-foreground">
+                    (horas, opcional)
+                  </span>
+                </label>
+                <input
+                  id="equipmentHourMeter"
+                  type="number"
+                  min={0}
+                  step={0.1}
+                  inputMode="decimal"
+                  value={newHourMeter}
+                  onChange={(event) => onNewHourMeterChange(event.target.value)}
+                  placeholder="Ex.: 1250.5"
+                  className="w-full rounded-lg border border-border bg-background px-4 py-3 text-foreground outline-none placeholder:text-muted-foreground focus:border-red-500"
+                />
+              </div>
+
               {newMessage && (
                 <p className="rounded-lg border border-red-300 bg-red-100 dark:border-red-900 dark:bg-red-950/40 p-3 text-sm text-red-700 dark:text-red-200">
                   {newMessage}
@@ -542,6 +579,29 @@ export function EquipmentPage({
                   value={editSerial}
                   onChange={(event) => onEditSerialChange(event.target.value)}
                   placeholder="Ex.: SN123456789"
+                  className="w-full rounded-lg border border-border bg-background px-4 py-3 text-foreground outline-none placeholder:text-muted-foreground focus:border-red-500"
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="editEquipmentHourMeter"
+                  className="mb-2 block text-sm font-medium text-foreground"
+                >
+                  Horímetro atual{' '}
+                  <span className="font-normal text-muted-foreground">
+                    (horas, opcional)
+                  </span>
+                </label>
+                <input
+                  id="editEquipmentHourMeter"
+                  type="number"
+                  min={0}
+                  step={0.1}
+                  inputMode="decimal"
+                  value={editHourMeter}
+                  onChange={(event) => onEditHourMeterChange(event.target.value)}
+                  placeholder="Ex.: 1250.5"
                   className="w-full rounded-lg border border-border bg-background px-4 py-3 text-foreground outline-none placeholder:text-muted-foreground focus:border-red-500"
                 />
               </div>

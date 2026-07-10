@@ -18,6 +18,10 @@ Execute no **SQL Editor** do Supabase Dashboard, **na ordem abaixo**, um arquivo
 | 8 | `ticket-approvals.sql` | Aprovação do cliente |
 | 9 | `parts-inventory.sql` | Estoque de peças |
 | 10 | `checklists.sql` | Checklists de equipamento |
+| 11 | `clients-extended-fields.sql` | Campos profissionais de clientes |
+| 12 | `gestor-ticket-actions.sql` | Gestor excluir chamados |
+| 13 | `ticket-service-completions.sql` | Conclusão com assinaturas |
+| 14 | `equipment-hour-meter.sql` | Horímetro + histórico + laudo |
 
 ## Notas importantes
 

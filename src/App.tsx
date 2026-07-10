@@ -78,7 +78,7 @@ import {
   fetchDashboardEvents,
   fetchDashboardLookups,
 } from '@/features/dashboard/api'
-import { formatDateTime } from '@/lib/format'
+import { formatDateTime, parseHourMeterInput } from '@/lib/format'
 import { priorityLabel, roleLabel, statusLabel } from '@/lib/tickets'
 import { supabase } from '@/lib/supabase'
 import type {
@@ -272,12 +272,14 @@ export default function App() {
   const [newEquipmentAssetTag, setNewEquipmentAssetTag] = useState('')
   const [newEquipmentDescription, setNewEquipmentDescription] = useState('')
   const [newEquipmentSerial, setNewEquipmentSerial] = useState('')
+  const [newEquipmentHourMeter, setNewEquipmentHourMeter] = useState('')
   const [newEquipmentLoading, setNewEquipmentLoading] = useState(false)
   const [newEquipmentMessage, setNewEquipmentMessage] = useState('')
   const [editEquipment, setEditEquipment] = useState<EquipmentWithAllocation | null>(null)
   const [editEquipmentAssetTag, setEditEquipmentAssetTag] = useState('')
   const [editEquipmentDescription, setEditEquipmentDescription] = useState('')
   const [editEquipmentSerial, setEditEquipmentSerial] = useState('')
+  const [editEquipmentHourMeter, setEditEquipmentHourMeter] = useState('')
   const [editEquipmentLoading, setEditEquipmentLoading] = useState(false)
   const [editEquipmentMessage, setEditEquipmentMessage] = useState('')
   const [deactivateEquipment, setDeactivateEquipment] =
@@ -1302,6 +1304,7 @@ export default function App() {
     setNewEquipmentAssetTag('')
     setNewEquipmentDescription('')
     setNewEquipmentSerial('')
+    setNewEquipmentHourMeter('')
     setNewEquipmentMessage('')
     setNewEquipmentOpen(true)
   }
@@ -1310,6 +1313,7 @@ export default function App() {
     setNewEquipmentAssetTag('')
     setNewEquipmentDescription('')
     setNewEquipmentSerial('')
+    setNewEquipmentHourMeter('')
     setNewEquipmentMessage('')
     setNewEquipmentOpen(false)
   }
@@ -1319,6 +1323,11 @@ export default function App() {
     setEditEquipmentAssetTag(item.asset_tag)
     setEditEquipmentDescription(item.description)
     setEditEquipmentSerial(item.serial_number ?? '')
+    setEditEquipmentHourMeter(
+      item.hour_meter_current !== null && item.hour_meter_current !== undefined
+        ? String(item.hour_meter_current)
+        : '',
+    )
     setEditEquipmentMessage('')
   }
 
@@ -1327,6 +1336,7 @@ export default function App() {
     setEditEquipmentAssetTag('')
     setEditEquipmentDescription('')
     setEditEquipmentSerial('')
+    setEditEquipmentHourMeter('')
     setEditEquipmentMessage('')
   }
 
@@ -1336,6 +1346,7 @@ export default function App() {
     const assetTag = newEquipmentAssetTag.trim()
     const description = newEquipmentDescription.trim()
     const serialNumber = newEquipmentSerial.trim()
+    const hourMeter = parseHourMeterInput(newEquipmentHourMeter)
 
     if (assetTag.length < 2) {
       setNewEquipmentMessage('Digite uma tag/patrimônio com pelo menos 2 caracteres.')
@@ -1347,6 +1358,11 @@ export default function App() {
       return
     }
 
+    if (Number.isNaN(hourMeter)) {
+      setNewEquipmentMessage('Horímetro inválido. Use um número maior ou igual a zero.')
+      return
+    }
+
     setNewEquipmentLoading(true)
     setNewEquipmentMessage('')
 
@@ -1354,6 +1370,7 @@ export default function App() {
       assetTag,
       description,
       serialNumber: serialNumber.length > 0 ? serialNumber : null,
+      hourMeterCurrent: hourMeter,
     })
 
     setNewEquipmentLoading(false)
@@ -1378,6 +1395,7 @@ export default function App() {
     const assetTag = editEquipmentAssetTag.trim()
     const description = editEquipmentDescription.trim()
     const serialNumber = editEquipmentSerial.trim()
+    const hourMeter = parseHourMeterInput(editEquipmentHourMeter)
 
     if (assetTag.length < 2) {
       setEditEquipmentMessage('Digite uma tag/patrimônio com pelo menos 2 caracteres.')
@@ -1389,6 +1407,11 @@ export default function App() {
       return
     }
 
+    if (Number.isNaN(hourMeter)) {
+      setEditEquipmentMessage('Horímetro inválido. Use um número maior ou igual a zero.')
+      return
+    }
+
     setEditEquipmentLoading(true)
     setEditEquipmentMessage('')
 
@@ -1397,6 +1420,7 @@ export default function App() {
       assetTag,
       description,
       serialNumber: serialNumber.length > 0 ? serialNumber : null,
+      hourMeterCurrent: hourMeter,
     })
 
     setEditEquipmentLoading(false)
@@ -2186,6 +2210,15 @@ export default function App() {
       return
     }
 
+    const hourMeterReading = parseHourMeterInput(values.hourMeterReading)
+    if (Number.isNaN(hourMeterReading)) {
+      setInspectionSaveLoading(false)
+      setInspectionSaveError(
+        'Horímetro inválido. Use um número maior ou igual a zero.',
+      )
+      return
+    }
+
     const { data, error } = await saveTicketInspection({
       ticketId: viewingTicket.id,
       inspectorId: profile.id,
@@ -2195,6 +2228,8 @@ export default function App() {
       causeNotes: values.causeNotes.trim() || null,
       responsibility: values.responsibility,
       recommendation,
+      hourMeterReading,
+      equipmentId: viewingTicket.equipment_id,
     })
 
     setInspectionSaveLoading(false)
@@ -3627,12 +3662,14 @@ export default function App() {
                 newAssetTag={newEquipmentAssetTag}
                 newDescription={newEquipmentDescription}
                 newSerial={newEquipmentSerial}
+                newHourMeter={newEquipmentHourMeter}
                 newLoading={newEquipmentLoading}
                 newMessage={newEquipmentMessage}
                 editEquipment={editEquipment}
                 editAssetTag={editEquipmentAssetTag}
                 editDescription={editEquipmentDescription}
                 editSerial={editEquipmentSerial}
+                editHourMeter={editEquipmentHourMeter}
                 editLoading={editEquipmentLoading}
                 editMessage={editEquipmentMessage}
                 deactivateEquipment={deactivateEquipment}
@@ -3653,12 +3690,14 @@ export default function App() {
                 onNewAssetTagChange={setNewEquipmentAssetTag}
                 onNewDescriptionChange={setNewEquipmentDescription}
                 onNewSerialChange={setNewEquipmentSerial}
+                onNewHourMeterChange={setNewEquipmentHourMeter}
                 onCreateEquipment={handleCreateEquipment}
                 onOpenEditModal={openEditEquipmentModal}
                 onCloseEditModal={closeEditEquipmentModal}
                 onEditAssetTagChange={setEditEquipmentAssetTag}
                 onEditDescriptionChange={setEditEquipmentDescription}
                 onEditSerialChange={setEditEquipmentSerial}
+                onEditHourMeterChange={setEditEquipmentHourMeter}
                 onUpdateEquipment={handleUpdateEquipment}
                 onOpenDeactivateModal={openDeactivateEquipmentModal}
                 onCloseDeactivateModal={closeDeactivateEquipmentModal}

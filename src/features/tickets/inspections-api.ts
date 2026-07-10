@@ -13,7 +13,7 @@ import type {
 } from '@/types'
 
 const INSPECTION_COLUMNS =
-  'id, ticket_id, inspector_id, inspected_at, findings, probable_cause, cause_notes, responsibility, recommendation, created_at, updated_at'
+  'id, ticket_id, inspector_id, inspected_at, findings, probable_cause, cause_notes, responsibility, recommendation, hour_meter_reading, created_at, updated_at'
 
 export type SaveInspectionInput = {
   ticketId: string
@@ -24,6 +24,8 @@ export type SaveInspectionInput = {
   causeNotes: string | null
   responsibility: InspectionResponsibility
   recommendation: string
+  hourMeterReading: number | null
+  equipmentId?: string | null
 }
 
 export async function fetchTicketInspection(ticketId: string) {
@@ -43,12 +45,19 @@ function buildInspectionEventMessage(input: SaveInspectionInput) {
     input.responsibility,
   )
 
-  return [
+  const parts = [
     inspectionResponsibilityLabel(input.responsibility),
     `Causa provável: ${inspectionCauseLabel(input.probableCause)}`,
     `Status sugerido: ${statusLabel(recommendedStatus)}`,
-    input.findings,
-  ].join(' · ')
+  ]
+
+  if (input.hourMeterReading !== null) {
+    parts.push(`Horímetro: ${input.hourMeterReading} h`)
+  }
+
+  parts.push(input.findings)
+
+  return parts.join(' · ')
 }
 
 export async function saveTicketInspection(input: SaveInspectionInput) {
@@ -61,6 +70,7 @@ export async function saveTicketInspection(input: SaveInspectionInput) {
     cause_notes: input.causeNotes,
     responsibility: input.responsibility,
     recommendation: input.recommendation,
+    hour_meter_reading: input.hourMeterReading,
     updated_at: new Date().toISOString(),
   }
 
@@ -87,6 +97,28 @@ export async function saveTicketInspection(input: SaveInspectionInput) {
 
   if (error || !data) {
     return { data: null, error }
+  }
+
+  if (
+    input.hourMeterReading !== null &&
+    input.equipmentId
+  ) {
+    const { error: hourMeterError } = await supabase.rpc(
+      'record_equipment_hour_meter',
+      {
+        p_equipment_id: input.equipmentId,
+        p_reading_value: input.hourMeterReading,
+        p_source: 'inspecao',
+        p_ticket_id: input.ticketId,
+        p_notes: 'Leitura registrada no laudo de inspeção',
+        p_read_at: input.inspectedAt,
+      },
+    )
+
+    if (hourMeterError) {
+      // Laudo já salvo; horímetro é complementar
+      console.warn('Falha ao atualizar horímetro:', hourMeterError.message)
+    }
   }
 
   await insertTicketEvent(

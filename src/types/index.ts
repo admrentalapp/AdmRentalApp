@@ -73,6 +73,8 @@ export type Equipment = {
   asset_tag: string
   description: string
   serial_number: string | null
+  hour_meter_current: number | null
+  hour_meter_updated_at: string | null
   active: boolean
   created_at: string
 }
@@ -163,6 +165,7 @@ export type TicketInspection = {
   cause_notes: string | null
   responsibility: InspectionResponsibility
   recommendation: string
+  hour_meter_reading: number | null
   created_at: string
   updated_at: string
 }
