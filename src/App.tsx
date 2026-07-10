@@ -160,6 +160,12 @@ const ReportsPage = lazy(() =>
   })),
 )
 
+const HelpPage = lazy(() =>
+  import('@/pages/help-page').then((module) => ({
+    default: module.HelpPage,
+  })),
+)
+
 const SitesPage = lazy(() =>
   import('@/pages/sites-page').then((module) => ({
     default: module.SitesPage,
@@ -3588,6 +3594,14 @@ export default function App() {
                 loading={reportsInitialLoading}
                 error={ticketsError || partsError || reportsError}
               />
+              </Suspense>
+            )}
+          </PagePanel>
+
+          <PagePanel active={activePage === 'help'}>
+            {visitedPages.has('help') && (
+              <Suspense fallback={<PageLoader message="Carregando ajuda..." />}>
+                <HelpPage onNavigate={changePage} />
               </Suspense>
             )}
           </PagePanel>

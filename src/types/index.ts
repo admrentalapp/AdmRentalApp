@@ -31,6 +31,7 @@ export type AppPage =
   | 'estoque'
   | 'checklist'
   | 'relatorios'
+  | 'help'
 
 export type Client = {
   id: string

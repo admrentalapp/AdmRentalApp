@@ -2,6 +2,7 @@ import {
   Building2,
   CheckSquare,
   ClipboardList,
+  CircleHelp,
   FileBarChart,
   LayoutDashboard,
   Package,
@@ -19,4 +20,5 @@ export const managerMenuItems: MenuItem[] = [
   { label: 'Estoque', page: 'estoque', icon: Package },
   { label: 'Checklist', page: 'checklist', icon: CheckSquare },
   { label: 'Relatórios', page: 'relatorios', icon: FileBarChart },
+  { label: 'Help', page: 'help', icon: CircleHelp },
 ]

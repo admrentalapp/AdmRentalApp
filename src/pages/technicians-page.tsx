@@ -1,5 +1,5 @@
 import { type FormEvent } from 'react'
-import { Info, Plus, Users, X } from 'lucide-react'
+import { Plus, Users, X } from 'lucide-react'
 import { DashboardCard } from '@/components/shared/dashboard-card'
 import { RoleBadge } from '@/components/shared/role-badge'
 import type { Client, ManagedProfile, UserRole } from '@/types'
@@ -123,15 +123,6 @@ export function TechniciansPage({
           <Plus size={16} />
           Novo usuário
         </button>
-      </section>
-
-      <section className="mt-6 flex gap-3 rounded-2xl border border-blue-300 bg-blue-100 dark:border-blue-950 dark:bg-blue-950/30 p-4 text-sm text-blue-700 dark:text-blue-200">
-        <Info size={18} className="mt-0.5 shrink-0" />
-        <p>
-          Novos usuários são criados pelo app via Edge Function{' '}
-          <code className="text-blue-800 dark:text-blue-100">create-user</code> (deploy no Supabase).
-          Aqui você também pode ajustar papel e empresa vinculada.
-        </p>
       </section>
 
       <section className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
