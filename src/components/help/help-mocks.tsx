@@ -25,8 +25,8 @@ export function MockSidebarMenu() {
 
   return (
     <HelpAppFrame title="Menu do Gestor">
-      <div className="flex gap-3">
-        <div className="w-40 shrink-0 space-y-1.5 rounded-xl border border-border bg-card p-2">
+      <div className="flex flex-col gap-3 sm:flex-row">
+        <div className="w-full space-y-1.5 rounded-xl border border-border bg-card p-2 sm:w-40 sm:shrink-0">
           {items.map((item) => {
             const Icon = item.icon
             return (
@@ -45,9 +45,9 @@ export function MockSidebarMenu() {
           })}
         </div>
         <div className="flex flex-1 flex-col justify-center rounded-xl border border-dashed border-border bg-muted/20 p-4 text-sm text-muted-foreground">
-          O menu lateral fica sempre à esquerda. A opção{' '}
-          <strong className="text-foreground">Help</strong> abre este manual
-          dentro do próprio sistema.
+          No computador, o menu fica à esquerda. No celular, abra pelo ícone de
+          menu. A opção <strong className="text-foreground">Help</strong> abre
+          este manual dentro do próprio sistema.
         </div>
       </div>
     </HelpAppFrame>
@@ -58,12 +58,12 @@ export function MockClientOpenTicket() {
   return (
     <HelpAppFrame title="Cliente · Abrir chamado">
       <div className="space-y-3">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-xs text-muted-foreground">Meus chamados</p>
             <p className="font-semibold text-foreground">Nova solicitação</p>
           </div>
-          <span className="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-semibold text-white">
+          <span className="w-fit rounded-lg bg-red-600 px-3 py-1.5 text-xs font-semibold text-white">
             Abrir chamado
           </span>
         </div>

@@ -32,7 +32,7 @@ export function HelpAppFrame({
           </span>
         </div>
       </div>
-      <div className="bg-card/40 p-4 sm:p-5">{children}</div>
+      <div className="bg-card/40 p-3 sm:p-5">{children}</div>
     </div>
   )
 }
