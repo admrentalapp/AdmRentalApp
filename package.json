@@ -8,7 +8,8 @@
     "build": "node scripts/generate-pwa-icons.mjs && tsc -b && vite build",
     "lint": "eslint .",
     "generate:pwa-icons": "node scripts/generate-pwa-icons.mjs",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "manual:pdf": "powershell -ExecutionPolicy Bypass -File scripts/build-manuals.ps1"
   },
   "dependencies": {
     "@fontsource-variable/geist": "^5.2.9",

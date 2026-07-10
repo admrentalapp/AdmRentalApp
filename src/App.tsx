@@ -1,11 +1,13 @@
 import { Suspense, lazy, useCallback, useEffect, useState, type FormEvent } from 'react'
 import { AlertTriangle, ClipboardList, LogOut, Menu, Plus, Trash2, X } from 'lucide-react'
 import { AppLogo } from '@/components/shared/app-logo'
+import { PagePanel } from '@/components/shared/page-panel'
 import { ThemeToggle } from '@/components/theme/theme-toggle'
 import type { InspectionFormValues } from '@/components/tickets/inspection-section'
 import { ServiceCompletionModal } from '@/components/tickets/service-completion-modal'
 import { PriorityBadge, StatusBadge } from '@/components/tickets/badges'
 import { managerMenuItems } from '@/config/menu'
+import type { LoadOptions } from '@/lib/load-options'
 import {
   createEquipmentAllocation,
   createFleetEquipment,
@@ -102,6 +104,7 @@ import type {
   UserRole,
 } from '@/types'
 import { isMaintenanceRole } from '@/types'
+import { DashboardPage } from '@/pages/dashboard-page'
 
 const LoginBackground = lazy(() =>
   import('@/components/auth/login-background').then((module) => ({
@@ -130,12 +133,6 @@ const ClientTicketDetailPage = lazy(() =>
 const ClientsPage = lazy(() =>
   import('@/pages/clients-page').then((module) => ({
     default: module.ClientsPage,
-  })),
-)
-
-const DashboardPage = lazy(() =>
-  import('@/pages/dashboard-page').then((module) => ({
-    default: module.DashboardPage,
   })),
 )
 
@@ -213,6 +210,9 @@ export default function App() {
 
   const [menuOpen, setMenuOpen] = useState(false)
   const [activePage, setActivePage] = useState<AppPage>('dashboard')
+  const [visitedPages, setVisitedPages] = useState<Set<AppPage>>(
+    () => new Set<AppPage>(['dashboard']),
+  )
 
   const [clients, setClients] = useState<Client[]>([])
   const [clientsLoading, setClientsLoading] = useState(false)
@@ -448,8 +448,10 @@ export default function App() {
   const [newUserLoading, setNewUserLoading] = useState(false)
   const [newUserMessage, setNewUserMessage] = useState('')
 
-  const loadClients = useCallback(async () => {
-    setClientsLoading(true)
+  const loadClients = useCallback(async (options?: LoadOptions) => {
+    if (!options?.silent) {
+      setClientsLoading(true)
+    }
     setClientsError('')
 
     const { data, error } = await supabase
@@ -457,7 +459,9 @@ export default function App() {
       .select(CLIENT_SELECT_COLUMNS)
       .order('name', { ascending: true })
 
-    setClientsLoading(false)
+    if (!options?.silent) {
+      setClientsLoading(false)
+    }
 
     if (error) {
       setClients([])
@@ -489,8 +493,10 @@ export default function App() {
     setSites((data ?? []) as Site[])
   }, [])
 
-  const loadProfiles = useCallback(async () => {
-    setProfilesLoading(true)
+  const loadProfiles = useCallback(async (options?: LoadOptions) => {
+    if (!options?.silent) {
+      setProfilesLoading(true)
+    }
     setProfilesError('')
 
     const { data, error } = await supabase
@@ -498,7 +504,9 @@ export default function App() {
       .select('id, full_name, role, client_id, created_at')
       .order('full_name', { ascending: true })
 
-    setProfilesLoading(false)
+    if (!options?.silent) {
+      setProfilesLoading(false)
+    }
 
     if (error) {
       setProfiles([])
@@ -523,13 +531,17 @@ export default function App() {
     return (data ?? []) as Site[]
   }, [])
 
-  const loadFleet = useCallback(async () => {
-    setEquipmentLoading(true)
+  const loadFleet = useCallback(async (options?: LoadOptions) => {
+    if (!options?.silent) {
+      setEquipmentLoading(true)
+    }
     setEquipmentError('')
 
     const { equipment, allocations, error } = await fetchFleetData()
 
-    setEquipmentLoading(false)
+    if (!options?.silent) {
+      setEquipmentLoading(false)
+    }
 
     if (error) {
       setEquipmentFleet([])
@@ -542,8 +554,10 @@ export default function App() {
     setEquipmentFleet(mergeEquipmentWithAllocations(equipment, allocations))
   }, [])
 
-  const loadDashboardData = useCallback(async (ticketList: Ticket[]) => {
-    setDashboardLoading(true)
+  const loadDashboardData = useCallback(async (ticketList: Ticket[], options?: LoadOptions) => {
+    if (!options?.silent) {
+      setDashboardLoading(true)
+    }
 
     const ticketIds = ticketList.map((ticket) => ticket.id)
     const [eventsResult, lookupsResult] = await Promise.all([
@@ -554,11 +568,19 @@ export default function App() {
     setDashboardEvents(eventsResult.data ?? [])
     setDashboardSiteLabels(lookupsResult.siteLabels)
     setDashboardEquipmentLabels(lookupsResult.equipmentLabels)
-    setDashboardLoading(false)
+
+    if (!options?.silent) {
+      setDashboardLoading(false)
+    }
   }, [])
 
-  const loadTickets = useCallback(async (statusFilter = '') => {
-    setTicketsLoading(true)
+  const loadTickets = useCallback(async (
+    statusFilter = '',
+    options?: LoadOptions & { forPage?: AppPage },
+  ) => {
+    if (!options?.silent) {
+      setTicketsLoading(true)
+    }
     setTicketsError('')
 
     let query = supabase
@@ -572,7 +594,9 @@ export default function App() {
 
     const { data, error } = await query
 
-    setTicketsLoading(false)
+    if (!options?.silent) {
+      setTicketsLoading(false)
+    }
 
     if (error) {
       setTickets([])
@@ -583,11 +607,12 @@ export default function App() {
     const parsedTickets = (data ?? []) as Ticket[]
     setTickets(parsedTickets)
 
+    const page = options?.forPage ?? activePage
     if (
       profile?.role === 'gestor_adm' &&
-      (activePage === 'dashboard' || activePage === 'relatorios')
+      (page === 'dashboard' || page === 'relatorios')
     ) {
-      void loadDashboardData(parsedTickets)
+      void loadDashboardData(parsedTickets, { silent: options?.silent })
     }
   }, [activePage, loadDashboardData, profile?.role])
 
@@ -696,11 +721,15 @@ export default function App() {
     setTicketServiceCompletion(parseTicketServiceCompletion(data))
   }, [])
 
-  const loadParts = useCallback(async () => {
-    setPartsLoading(true)
+  const loadParts = useCallback(async (options?: LoadOptions) => {
+    if (!options?.silent) {
+      setPartsLoading(true)
+    }
     setPartsError('')
     const { data, error } = await fetchParts()
-    setPartsLoading(false)
+    if (!options?.silent) {
+      setPartsLoading(false)
+    }
     if (error) {
       setParts([])
       setPartsError(error.message || 'Não foi possível carregar o estoque.')
@@ -731,8 +760,10 @@ export default function App() {
     setChecklistRuns(parseRuns(runsResult.data))
   }, [])
 
-  const loadReportsData = useCallback(async () => {
-    setReportsLoading(true)
+  const loadReportsData = useCallback(async (options?: LoadOptions) => {
+    if (!options?.silent) {
+      setReportsLoading(true)
+    }
     setReportsError('')
 
     const [approvalsResult, runsResult, movementsResult, templatesResult] =
@@ -743,7 +774,9 @@ export default function App() {
         fetchChecklistTemplates(),
       ])
 
-    setReportsLoading(false)
+    if (!options?.silent) {
+      setReportsLoading(false)
+    }
 
     setReportApprovals(
       approvalsResult.error ? [] : parseTicketApprovals(approvalsResult.data),
@@ -2444,6 +2477,7 @@ export default function App() {
 
   function changePage(page: AppPage) {
     setActivePage(page)
+    setVisitedPages((current) => new Set(current).add(page))
     setMenuOpen(false)
     backToClients()
     setEditProfile(null)
@@ -2452,50 +2486,64 @@ export default function App() {
     resetTicketsView()
 
     if (page === 'clientes' || page === 'dashboard') {
-      void loadClients()
-      void loadTickets()
+      void loadClients({ silent: clients.length > 0 })
+      void loadTickets('', {
+        silent: tickets.length > 0,
+        forPage: page,
+      })
 
       if (page === 'dashboard' && profile?.role === 'gestor_adm') {
-        void loadProfiles()
+        void loadProfiles({ silent: profiles.length > 0 })
       }
     }
 
     if (page === 'tecnicos') {
-      void loadClients()
-      void loadProfiles()
+      void loadClients({ silent: clients.length > 0 })
+      void loadProfiles({ silent: profiles.length > 0 })
     }
 
     if (page === 'equipamentos') {
-      void loadClients()
-      void loadFleet()
+      void loadClients({ silent: clients.length > 0 })
+      void loadFleet({ silent: equipmentFleet.length > 0 })
     }
 
     if (page === 'chamados') {
       if (profile && isMaintenanceRole(profile.role)) {
         void loadTechnicianTickets(profile.id)
       } else {
-        void loadClients()
-        void loadProfiles()
-        void loadTickets()
+        void loadClients({ silent: clients.length > 0 })
+        void loadProfiles({ silent: profiles.length > 0 })
+        void loadTickets(ticketStatusFilter, {
+          silent: tickets.length > 0,
+          forPage: page,
+        })
       }
     }
 
     if (page === 'estoque') {
-      void loadParts()
+      void loadParts({ silent: parts.length > 0 })
     }
 
     if (page === 'checklist') {
-      void loadFleet()
+      void loadFleet({ silent: equipmentFleet.length > 0 })
       void loadChecklistData()
     }
 
     if (page === 'relatorios') {
-      void loadClients()
-      void loadProfiles()
-      void loadTickets()
-      void loadParts()
-      void loadFleet()
-      void loadReportsData()
+      void loadClients({ silent: clients.length > 0 })
+      void loadProfiles({ silent: profiles.length > 0 })
+      void loadTickets('', {
+        silent: tickets.length > 0,
+        forPage: page,
+      })
+      void loadParts({ silent: parts.length > 0 })
+      void loadFleet({ silent: equipmentFleet.length > 0 })
+      void loadReportsData({
+        silent:
+          reportApprovals.length > 0 ||
+          reportChecklistRuns.length > 0 ||
+          reportPartMovements.length > 0,
+      })
     }
   }
 
@@ -3101,6 +3149,12 @@ export default function App() {
   }
 
   const activeMenuItem = managerMenuItems.find((item) => item.page === activePage)
+  const dashboardBusy = ticketsLoading || dashboardLoading
+  const dashboardInitialLoading = tickets.length === 0 && dashboardBusy
+  const reportsBusy =
+    ticketsLoading || partsLoading || dashboardLoading || reportsLoading
+  const reportsHasData = tickets.length > 0 || parts.length > 0
+  const reportsInitialLoading = !reportsHasData && reportsBusy
 
   return (
     <main className="min-h-svh bg-background text-foreground">
@@ -3206,22 +3260,25 @@ export default function App() {
         </header>
 
         <div className="p-5 sm:p-8">
-          <Suspense fallback={<PageLoader />}>
-            {activePage === 'dashboard' && (
+          <PagePanel active={activePage === 'dashboard'}>
+            {visitedPages.has('dashboard') && (
               <DashboardPage
                 tickets={tickets}
                 events={dashboardEvents}
                 profiles={profiles}
                 equipmentLabels={dashboardEquipmentLabels}
                 siteLabels={dashboardSiteLabels}
-                loading={ticketsLoading || dashboardLoading}
+                loading={dashboardInitialLoading}
                 onGoToTickets={() => changePage('chamados')}
               />
             )}
+          </PagePanel>
 
-            {activePage === 'clientes' &&
-              (viewingClient ? (
-                <SitesPage
+          <PagePanel active={activePage === 'clientes'}>
+            {visitedPages.has('clientes') && (
+              <Suspense fallback={<PageLoader />}>
+                {viewingClient ? (
+                  <SitesPage
                   client={viewingClient}
                   sites={sites}
                   loading={sitesLoading}
@@ -3272,11 +3329,16 @@ export default function App() {
                   onCloseDeactivateClient={closeDeactivateClientModal}
                   onDeactivateClient={() => void handleDeactivateClient()}
                 />
-              ))}
+                )}
+              </Suspense>
+            )}
+          </PagePanel>
 
-            {activePage === 'chamados' &&
-              (viewingTicket ? (
-                <TicketDetailPage
+          <PagePanel active={activePage === 'chamados'}>
+            {visitedPages.has('chamados') && (
+              <Suspense fallback={<PageLoader />}>
+                {viewingTicket ? (
+                  <TicketDetailPage
                   ticket={viewingTicket}
                   clients={clients}
                   profiles={profiles}
@@ -3369,10 +3431,15 @@ export default function App() {
                   onCloseDeleteTicket={closeDeleteGestorTicketModal}
                   onDeleteTicket={() => void handleDeleteGestorTicket()}
                 />
-              ))}
+                )}
+              </Suspense>
+            )}
+          </PagePanel>
 
-            {activePage === 'tecnicos' && (
-              <TechniciansPage
+          <PagePanel active={activePage === 'tecnicos'}>
+            {visitedPages.has('tecnicos') && (
+              <Suspense fallback={<PageLoader />}>
+                <TechniciansPage
                 profiles={profiles}
                 clients={clients}
                 currentUserId={profile.id}
@@ -3408,10 +3475,14 @@ export default function App() {
                 onNewUserClientChange={setNewUserClientId}
                 onCreateUser={handleCreateUser}
               />
+              </Suspense>
             )}
+          </PagePanel>
 
-            {activePage === 'estoque' && (
-              <InventoryPage
+          <PagePanel active={activePage === 'estoque'}>
+            {visitedPages.has('estoque') && (
+              <Suspense fallback={<PageLoader />}>
+                <InventoryPage
                 parts={parts}
                 loading={partsLoading}
                 error={partsError}
@@ -3469,10 +3540,14 @@ export default function App() {
                 onRegisterMovement={handleRegisterMovement}
                 onReload={() => void loadParts()}
               />
+              </Suspense>
             )}
+          </PagePanel>
 
-            {activePage === 'checklist' && (
-              <ChecklistPage
+          <PagePanel active={activePage === 'checklist'}>
+            {visitedPages.has('checklist') && (
+              <Suspense fallback={<PageLoader />}>
+                <ChecklistPage
                 templates={checklistTemplates}
                 runs={checklistRuns}
                 equipment={equipmentFleet}
@@ -3490,10 +3565,14 @@ export default function App() {
                 onStartRun={handleStartChecklist}
                 onReload={() => void loadChecklistData()}
               />
+              </Suspense>
             )}
+          </PagePanel>
 
-            {activePage === 'relatorios' && (
-              <ReportsPage
+          <PagePanel active={activePage === 'relatorios'}>
+            {visitedPages.has('relatorios') && (
+              <Suspense fallback={<PageLoader />}>
+                <ReportsPage
                 tickets={tickets}
                 parts={parts}
                 events={dashboardEvents}
@@ -3506,15 +3585,17 @@ export default function App() {
                 checklistRuns={reportChecklistRuns}
                 checklistTemplates={checklistTemplates}
                 partMovements={reportPartMovements}
-                loading={
-                  ticketsLoading || partsLoading || dashboardLoading || reportsLoading
-                }
+                loading={reportsInitialLoading}
                 error={ticketsError || partsError || reportsError}
               />
+              </Suspense>
             )}
+          </PagePanel>
 
-            {activePage === 'equipamentos' && (
-              <EquipmentPage
+          <PagePanel active={activePage === 'equipamentos'}>
+            {visitedPages.has('equipamentos') && (
+              <Suspense fallback={<PageLoader />}>
+                <EquipmentPage
                 clients={clients}
                 sites={
                   allocateModalOpen ? allocateSites : equipmentFilterSites
@@ -3579,8 +3660,9 @@ export default function App() {
                   void handleEndAllocation(allocationId)
                 }
               />
+              </Suspense>
             )}
-          </Suspense>
+          </PagePanel>
         </div>
       </section>
     </main>

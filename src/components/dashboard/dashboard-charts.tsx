@@ -107,6 +107,7 @@ function DonutChart({
               outerRadius={88}
               paddingAngle={2}
               stroke="none"
+              isAnimationActive={false}
             >
               {data.map((entry) => (
                 <Cell key={entry.key} fill={colorFor(entry)} />
@@ -182,6 +183,7 @@ export function SlaTrendChart({ data }: { data: SlaDailyPoint[] }) {
             fill="url(#slaGradient)"
             dot={{ fill: '#22c55e', r: 3, strokeWidth: 0 }}
             activeDot={{ r: 6, fill: '#22c55e', stroke: '#052e16', strokeWidth: 3 }}
+            isAnimationActive={false}
           />
         </AreaChart>
       </ResponsiveContainer>
@@ -261,6 +263,7 @@ export function EquipmentFailureChart({ data }: { data: EquipmentFailureRow[] })
             fill="url(#failGradient)"
             radius={[0, 8, 8, 0]}
             barSize={18}
+            isAnimationActive={false}
           />
         </BarChart>
       </ResponsiveContainer>

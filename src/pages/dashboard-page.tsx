@@ -128,14 +128,26 @@ export function DashboardPage({
 
   if (loading) {
     return (
-      <div className="flex min-h-64 items-center justify-center rounded-2xl border border-border bg-card text-sm text-muted-foreground">
-        Carregando painel...
+      <div className="space-y-6">
+        <div className="h-40 animate-pulse rounded-3xl border border-border bg-muted/40" />
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
+          {Array.from({ length: 6 }).map((_, index) => (
+            <div
+              key={index}
+              className="h-28 animate-pulse rounded-2xl border border-border bg-muted/40"
+            />
+          ))}
+        </div>
+        <div className="grid gap-5 xl:grid-cols-2">
+          <div className="h-72 animate-pulse rounded-2xl border border-border bg-muted/40" />
+          <div className="h-72 animate-pulse rounded-2xl border border-border bg-muted/40" />
+        </div>
       </div>
     )
   }
 
   return (
-    <>
+    <div>
       <section className="relative overflow-hidden rounded-3xl border border-border/80 bg-linear-to-br from-card via-card/80 to-background p-7">
         <div className="pointer-events-none absolute -right-20 -top-24 h-72 w-72 rounded-full bg-red-600/10 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-32 left-10 h-72 w-72 rounded-full bg-sky-600/5 blur-3xl" />
@@ -314,6 +326,6 @@ export function DashboardPage({
           )}
         </SectionCard>
       </section>
-    </>
+    </div>
   )
 }

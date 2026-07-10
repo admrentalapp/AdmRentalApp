@@ -877,8 +877,17 @@ export function ReportsPage({
 
   if (loading) {
     return (
-      <div className="flex min-h-64 items-center justify-center rounded-2xl border border-border bg-card text-sm text-muted-foreground">
-        Carregando relatórios...
+      <div className="space-y-6">
+        <div className="h-40 animate-pulse rounded-3xl border border-border bg-muted/40" />
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, index) => (
+            <div
+              key={index}
+              className="h-28 animate-pulse rounded-2xl border border-border bg-muted/40"
+            />
+          ))}
+        </div>
+        <div className="h-96 animate-pulse rounded-2xl border border-border bg-muted/40" />
       </div>
     )
   }
