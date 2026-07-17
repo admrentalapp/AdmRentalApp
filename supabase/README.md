@@ -38,9 +38,12 @@ Após o banco configurado, publique a função para criação de usuários pelo 
 
 ```bash
 npx supabase functions deploy create-user
+npx supabase functions deploy delete-user
 ```
 
-Código em `supabase/functions/create-user/index.ts`.
+Código em:
+- `supabase/functions/create-user/index.ts`
+- `supabase/functions/delete-user/index.ts`
 
 ### Verificação rápida
 

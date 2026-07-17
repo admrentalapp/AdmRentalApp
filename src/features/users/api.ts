@@ -20,3 +20,11 @@ export async function createManagedUser(input: CreateUserInput) {
     },
   })
 }
+
+export async function deleteManagedUser(userId: string) {
+  return supabase.functions.invoke('delete-user', {
+    body: {
+      user_id: userId,
+    },
+  })
+}

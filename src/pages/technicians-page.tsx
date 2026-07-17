@@ -1,5 +1,5 @@
 import { type FormEvent } from 'react'
-import { Plus, Users, X } from 'lucide-react'
+import { Plus, Trash2, Users, X } from 'lucide-react'
 import { DashboardCard } from '@/components/shared/dashboard-card'
 import { RoleBadge } from '@/components/shared/role-badge'
 import type { Client, ManagedProfile, UserRole } from '@/types'
@@ -37,6 +37,12 @@ export function TechniciansPage({
   onNewUserRoleChange,
   onNewUserClientChange,
   onCreateUser,
+  deleteUser,
+  deleteLoading,
+  deleteMessage,
+  onOpenDeleteUser,
+  onCloseDeleteUser,
+  onDeleteUser,
 }: {
   profiles: ManagedProfile[]
   clients: Client[]
@@ -69,6 +75,12 @@ export function TechniciansPage({
   onNewUserRoleChange: (role: UserRole) => void
   onNewUserClientChange: (value: string) => void
   onCreateUser: (event: FormEvent<HTMLFormElement>) => void
+  deleteUser: ManagedProfile | null
+  deleteLoading: boolean
+  deleteMessage: string
+  onOpenDeleteUser: (managed: ManagedProfile) => void
+  onCloseDeleteUser: () => void
+  onDeleteUser: () => void
 }) {
   const maintenanceAdmCount = profiles.filter(
     (item) => item.role === 'manutencao_adm',
@@ -210,7 +222,7 @@ export function TechniciansPage({
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3">
+                  <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                     <RoleBadge role={managed.role} />
 
                     <button
@@ -220,6 +232,16 @@ export function TechniciansPage({
                       className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-accent disabled:cursor-not-allowed disabled:opacity-40"
                     >
                       Gerenciar
+                    </button>
+
+                    <button
+                      type="button"
+                      disabled={isCurrentUser}
+                      onClick={() => onOpenDeleteUser(managed)}
+                      className="inline-flex items-center gap-2 rounded-lg border border-red-200 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-red-950 dark:text-red-300 dark:hover:bg-red-950/30"
+                    >
+                      <Trash2 size={16} />
+                      Apagar
                     </button>
                   </div>
                 </div>
@@ -469,6 +491,59 @@ export function TechniciansPage({
                 {newUserLoading ? 'Criando...' : 'Criar usuário'}
               </button>
             </form>
+          </section>
+        </div>
+      )}
+
+      {deleteUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/75 p-4 sm:p-5">
+          <section className="my-auto w-full max-w-md rounded-2xl border border-border bg-card p-5 shadow-2xl sm:p-6">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-sm text-muted-foreground">Remover acesso</p>
+                <h3 className="mt-1 text-xl font-bold">Apagar usuário</h3>
+              </div>
+              <button
+                type="button"
+                onClick={onCloseDeleteUser}
+                className="rounded-lg p-2 text-muted-foreground hover:bg-accent hover:text-foreground"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
+              Tem certeza que deseja apagar{' '}
+              <span className="font-semibold text-foreground">
+                {deleteUser.full_name || 'este usuário'}
+              </span>
+              ? O login será removido e a pessoa não poderá mais acessar o
+              sistema. Chamados já existentes permanecem no histórico.
+            </p>
+
+            {deleteMessage && (
+              <p className="mt-4 rounded-lg border border-red-300 bg-red-100 p-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200">
+                {deleteMessage}
+              </p>
+            )}
+
+            <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                onClick={onCloseDeleteUser}
+                className="rounded-lg border border-border px-4 py-3 text-sm font-medium text-foreground hover:bg-accent"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                disabled={deleteLoading}
+                onClick={onDeleteUser}
+                className="rounded-lg bg-red-600 px-5 py-3 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-60"
+              >
+                {deleteLoading ? 'Apagando...' : 'Apagar usuário'}
+              </button>
+            </div>
           </section>
         </div>
       )}

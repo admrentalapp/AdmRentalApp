@@ -73,7 +73,7 @@ import {
   validateClientForm,
   type ClientFormValues,
 } from '@/features/clients/api'
-import { createManagedUser } from '@/features/users/api'
+import { createManagedUser, deleteManagedUser } from '@/features/users/api'
 import {
   fetchDashboardEvents,
   fetchDashboardLookups,
@@ -455,6 +455,11 @@ export default function App() {
   const [newUserClientId, setNewUserClientId] = useState('')
   const [newUserLoading, setNewUserLoading] = useState(false)
   const [newUserMessage, setNewUserMessage] = useState('')
+  const [deleteUserTarget, setDeleteUserTarget] = useState<ManagedProfile | null>(
+    null,
+  )
+  const [deleteUserLoading, setDeleteUserLoading] = useState(false)
+  const [deleteUserMessage, setDeleteUserMessage] = useState('')
 
   const loadClients = useCallback(async (options?: LoadOptions) => {
     if (!options?.silent) {
@@ -2328,6 +2333,57 @@ export default function App() {
     await loadProfiles()
   }
 
+  function openDeleteUserModal(managed: ManagedProfile) {
+    if (managed.id === profile?.id) {
+      return
+    }
+    setDeleteUserTarget(managed)
+    setDeleteUserMessage('')
+  }
+
+  function closeDeleteUserModal() {
+    setDeleteUserTarget(null)
+    setDeleteUserMessage('')
+    setDeleteUserLoading(false)
+  }
+
+  async function handleDeleteUser() {
+    if (!deleteUserTarget) return
+
+    if (deleteUserTarget.id === profile?.id) {
+      setDeleteUserMessage('Você não pode apagar o próprio usuário.')
+      return
+    }
+
+    setDeleteUserLoading(true)
+    setDeleteUserMessage('')
+
+    const { data, error } = await deleteManagedUser(deleteUserTarget.id)
+
+    setDeleteUserLoading(false)
+
+    if (error) {
+      setDeleteUserMessage(
+        error.message ||
+          'Falha ao apagar usuário. Verifique se a Edge Function delete-user está publicada no Supabase.',
+      )
+      return
+    }
+
+    const response = data as { error?: string } | null
+    if (response?.error) {
+      setDeleteUserMessage(response.error)
+      return
+    }
+
+    if (editProfile?.id === deleteUserTarget.id) {
+      setEditProfile(null)
+    }
+
+    closeDeleteUserModal()
+    await loadProfiles()
+  }
+
   async function handleCreatePart(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setNewPartLoading(true)
@@ -3515,6 +3571,12 @@ export default function App() {
                 onNewUserRoleChange={setNewUserRole}
                 onNewUserClientChange={setNewUserClientId}
                 onCreateUser={handleCreateUser}
+                deleteUser={deleteUserTarget}
+                deleteLoading={deleteUserLoading}
+                deleteMessage={deleteUserMessage}
+                onOpenDeleteUser={openDeleteUserModal}
+                onCloseDeleteUser={closeDeleteUserModal}
+                onDeleteUser={() => void handleDeleteUser()}
               />
               </Suspense>
             )}
